@@ -1,4 +1,3 @@
-# from .anim.enums import OBJECT_BAKE_TYPE
 import bpy
 from .enums import OBJECT_BAKE_TYPE, OBJECT_TYPE
 from .gconfig.events import GEventPool
@@ -29,7 +28,7 @@ class BT_OT_bake_text(bpy.types.Operator):
         children = obj.children
         for child in children:
             arr.append({"time": offset, "data": [
-                       "SetParent", f'{child.name},{obj.name}']})
+                "SetParent", f'{child.name},{obj.name}']})
 
         return arr
 
@@ -47,6 +46,7 @@ class BT_OT_bake_text(bpy.types.Operator):
             ps = obj.particle_systems
             name = obj.name
             object_type = get_object_type(obj)
+            bake = None
 
             if object_type == OBJECT_TYPE.PARENT:
                 arr.extend(self.bake_parent(obj))
@@ -61,10 +61,9 @@ class BT_OT_bake_text(bpy.types.Operator):
                 name = ps.active.settings.name
             elif obj.bake_text_info.bake_type == OBJECT_BAKE_TYPE.BAKE_LOCATION:
                 bake = bake_object(obj, end)
-            else:
-                bake = bake_vertex(obj, end)
 
-            gevents.add(prepare(bake, name))
+            if bake:
+                gevents.add(prepare(bake, name))
 
         save(gevents.to_list())
 

@@ -1,4 +1,15 @@
 import bpy
+from .image.operators import image_enum
+from .enums import OBJECT_BAKE_TYPE, OBJECT_RENDER_TYPE
+
+
+class ObjectSettings(bpy.types.PropertyGroup):
+    bake_type: bpy.props.EnumProperty(items=(
+        (OBJECT_BAKE_TYPE.BAKE_VERTEX, 'Запечь Вершины', ''),
+        (OBJECT_BAKE_TYPE.BAKE_LOCATION, 'Запечь Позицию', '')
+    ), default=OBJECT_BAKE_TYPE.BAKE_LOCATION)
+    image: bpy.props.EnumProperty(items=image_enum)
+    render_type: bpy.props.EnumProperty(items=OBJECT_RENDER_TYPE.enum())
 
 
 class InversSettings(bpy.types.PropertyGroup):
@@ -7,7 +18,7 @@ class InversSettings(bpy.types.PropertyGroup):
     scale: bpy.props.BoolVectorProperty(subtype='XYZ')
 
 
-class BakeTextSettings(bpy.types.PropertyGroup):
+class SceneSettings(bpy.types.PropertyGroup):
     save_type: bpy.props.EnumProperty(items=[
         ('copy_buffer', 'Сохранить в буфер обмена', ''),
         ('file', 'Сохранить в файл', '')
@@ -17,6 +28,9 @@ class BakeTextSettings(bpy.types.PropertyGroup):
     offset: bpy.props.FloatProperty(default=1.0)
     path: bpy.props.StringProperty(
         subtype='FILE_PATH', default='//untitled.json')
+
+    project_folder: bpy.props.StringProperty(
+        subtype='DIR_PATH')
 
     global_location: bpy.props.FloatVectorProperty(
         default=(1.0,) * 3, subtype='XYZ')
@@ -31,21 +45,21 @@ class BakeTextSettings(bpy.types.PropertyGroup):
 
 
 reg, unreg = bpy.utils.register_classes_factory((
-    BakeTextSettings,
+    SceneSettings,
     InversSettings,
+    ObjectSettings
 ))
 
 
 def register():
     reg()
-    bpy.types.Scene.bake_text_settings = bpy.props.PointerProperty(
-        type=BakeTextSettings)
+    bpy.types.Scene.bt_settings = bpy.props.PointerProperty(
+        type=SceneSettings)
 
-    bpy.types.Scene.bake_text_invers = bpy.props.PointerProperty(
+    bpy.types.Scene.bt_invers = bpy.props.PointerProperty(
         type=InversSettings)
+    bpy.types.Object.bt_settings = bpy.props.PointerProperty(type=ObjectSettings)
 
 
 def unregister():
-    del bpy.types.Scene.bake_text_settings
-
     unreg()

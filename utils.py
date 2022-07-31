@@ -91,7 +91,7 @@ def to_numpy(arr) -> numpy.ndarray:
 
 def apply_global_div(obj_data: ObjData):
     context = bpy.context
-    settings = context.scene.bake_text_settings
+    settings = context.scene.bt_settings
     global_location = settings.global_location
     global_rotation = settings.global_rotation
     global_scale = settings.global_scale
@@ -106,7 +106,7 @@ def apply_global_div(obj_data: ObjData):
 
 
 def apply_accuracy(value: float) -> float:
-    accuracy = bpy.context.scene.bake_text_settings.accuracy
+    accuracy = bpy.context.scene.bt_settings.accuracy
     return round(value, accuracy)
 
 
@@ -118,7 +118,7 @@ def apply_invers_round(vecs, invers):
 
 
 def calc_time(frame: float) -> float:
-    settings = bpy.context.scene.bake_text_settings
+    settings = bpy.context.scene.bt_settings
     fps = settings.fps
     offset = settings.offset
 
@@ -131,7 +131,7 @@ def prepare(bake_data: list[ObjData], name: str) -> GEventPool:
     gevent: GEventPool = GEventPool()
     context = bpy.context
     scene = context.scene
-    invers = scene.bake_text_invers
+    invers = scene.bt_settings
 
     invers = [
         xyz_to_arr(invers.position),
@@ -158,7 +158,7 @@ def prepare(bake_data: list[ObjData], name: str) -> GEventPool:
 
 
 def save(arr: list[str]):
-    settings = bpy.context.scene.bake_text_settings
+    settings = bpy.context.scene.bt_settings
     save_type: str = settings.save_type
     path = settings.path
 

@@ -1,4 +1,4 @@
-from . import operators, properties, ui, anim
+from . import operators, properties, ui, anim, image
 
 bl_info = {
     'name': 'Bake Text',
@@ -6,12 +6,13 @@ bl_info = {
     'category': 'Object',
     'author': 'Zenker'
 }
-1
+
 modules = (
     properties,
     operators,
     ui,
-    anim
+    anim,
+    image
 )
 
 

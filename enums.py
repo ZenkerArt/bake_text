@@ -1,3 +1,5 @@
+from enum import Enum
+
 import bpy
 
 
@@ -15,6 +17,24 @@ class OBJECT_TYPE:
             return cls.PARENT
 
         return cls.OBJECT
+
+
+OBJECT_RENDER_TYPE_TRANS = {'SUN': 'Солнце', 'SPRITE': 'Картинка'}
+
+
+class OBJECT_RENDER_TYPE:
+    SUN = 'SUN'
+    SPRITE = 'SPRITE'
+
+    @classmethod
+    def enum(cls):
+        arr = []
+        for key, value in cls.__dict__.items():
+            if key.startswith('_') or not isinstance(value, str):
+                continue
+            arr.append((value, OBJECT_RENDER_TYPE_TRANS[value], ''))
+
+        return arr
 
 
 class OBJECT_BAKE_TYPE:
