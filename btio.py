@@ -1,6 +1,7 @@
 from dataclasses import dataclass
 from os.path import exists, join, split, abspath
 from shutil import copy
+from os import DirEntry, scandir
 
 import bpy
 import os
@@ -13,11 +14,11 @@ class File:
 
 
 def get_project_folder() -> str:
-    return bpy.context.scene.bt_settings.project_folder
+    return bpy.path.abspath(bpy.context.scene.bt_settings.project_folder)
 
 
 def get_folder(folder: str):
-    path = bpy.path.abspath(join(get_project_folder(), folder))
+    path = join(get_project_folder(), folder)
     if exists(path):
         return path
     os.mkdir(path)
@@ -30,6 +31,12 @@ def copy_file_to_project(filepath: str, folder: str, filename: str = None):
 
     path_cache = get_folder(folder)
     new_path = join(path_cache, name)
+
+    if exists(new_path):
+        return File(
+            name=name,
+            path=new_path
+        )
 
     copy(filepath, new_path)
 
@@ -49,6 +56,13 @@ class Folder:
     def path(self):
         return get_folder(self._folder_name)
 
+    def scan(self) -> list[DirEntry]:
+        d = scandir(self.path)
+        return list(d)
+
+    def relative_path(self, filename: str):
+        return join(f'.\\{self._folder_name}', filename)
+
     def get_file(self, filename: str):
         return join(self.path, filename)
 
@@ -63,4 +77,5 @@ class Folder:
 
 
 class ProjectFolders:
+    root = Folder('')
     images = Folder('images')

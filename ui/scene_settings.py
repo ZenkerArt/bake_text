@@ -1,4 +1,5 @@
 import bpy
+from ..progress_bar import ProgressBar
 from ..operators import BT_OT_bake_text
 from . import BasePanel
 
@@ -15,6 +16,9 @@ class BT_PT_scene_settings(BasePanel, bpy.types.Panel):
 
         if settings.project_folder.strip() == '':
             return
+
+        layout.label(text='Название проекта')
+        layout.prop(settings, 'project_name', text='')
 
         sub = layout.column(align=True)
         sub.prop(settings, 'fps', text='ФПС')

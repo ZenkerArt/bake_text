@@ -5,7 +5,6 @@ from bpy.props import StringProperty, CollectionProperty
 from bpy.utils.previews import ImagePreviewCollection
 from bpy_extras.io_utils import ImportHelper
 from bpy_types import Operator, PropertyGroup
-from .enums import IMAGE_ACTION
 from ..btio import ProjectFolders
 
 
@@ -14,7 +13,7 @@ def image_enum(self, context):
     arr = []
     for i in scene.bt_images:
         arr.append((
-            i.name, i.label, ''
+            i.name, i.name, ''
         ))
     return tuple(arr)
 
@@ -32,8 +31,17 @@ def on_image_rename(self, context):
     ImageLoader.load_icons()
 
 
+def add_image(filepath: str):
+    file = ProjectFolders.images.save_file(filepath)
+    ImageLoader.add_icon(file.name, file.path)
+
+    image = bpy.context.scene.bt_images.add()
+    image.path = file.path
+    image.name = file.name
+    image.prev_name = file.name
+
+
 class Image(PropertyGroup):
-    label: bpy.props.StringProperty()
     name: bpy.props.StringProperty(update=on_image_rename)
     prev_name: bpy.props.StringProperty()
     path: bpy.props.StringProperty()
@@ -41,7 +49,7 @@ class Image(PropertyGroup):
     @classmethod
     def active(cls):
         scene = bpy.context.scene
-        return scene.bt_images[scene.bt_images_action]
+        return scene.bt_images[scene.bt_images_active]
 
     @classmethod
     def active_icon(cls):
@@ -81,25 +89,29 @@ class ImageLoader:
         return cls.preview_collection[name]
 
 
-class BT_OT_action_image(Operator, ImportHelper):
-    bl_idname = 'bt.load_image'
-    bl_label = 'Load image'
-    action: bpy.props.EnumProperty(IMAGE_ACTION.enum())
+class BT_OT_add_image(Operator, ImportHelper):
+    bl_idname = 'bt.add_image'
+    bl_label = 'Add Image'
 
     filter_glob: StringProperty(
         default='*.jpg;*.jpeg;*.png;*.tif;*.tiff;*.bmp', options={'HIDDEN'})
 
     def execute(self, context: bpy.types.Context):
         filepath: str = self.properties.filepath
+        add_image(filepath)
+        return {'FINISHED'}
 
-        file = ProjectFolders.images.save_file(filepath)
-        ImageLoader.add_icon(file.name, file.path)
 
-        image = context.scene.bt_images.add()
-        image.path = file.path
-        image.name = file.name
-        image.label = file.name.rsplit('.', 1)[0]
-        image.prev_name = file.name
+class BT_OT_remove_image(Operator):
+    bl_idname = 'bt.remove_image'
+    bl_label = 'Remove Image'
+
+    def execute(self, context: bpy.types.Context):
+        try:
+            ProjectFolders.images.remove_file(Image.active().name)
+        except FileNotFoundError:
+            pass
+        context.scene.bt_images.remove(context.scene.bt_images_active)
         return {'FINISHED'}
 
 
@@ -114,9 +126,34 @@ class BT_OT_clear_images(Operator):
         return {'FINISHED'}
 
 
+class BT_OT_scan_images(Operator):
+    bl_idname = 'bt.scan_images'
+    bl_label = 'Scan Images'
+
+    def execute(self, context: bpy.types.Context):
+        names: list[str] = context.scene.bt_images.keys()
+        s = ProjectFolders.images.scan()
+        s_names = [i.name for i in s]
+
+        for i in ProjectFolders.images.scan():
+            if i.name in names:
+                continue
+            add_image(i.path)
+
+        for index, name in enumerate(context.scene.bt_images.keys()):
+            if name in s_names:
+                continue
+            context.scene.bt_images.remove(index)
+        # context.scene.bt_images.clear()
+        ImageLoader.load_icons()
+        return {'FINISHED'}
+
+
 reg, unreg = bpy.utils.register_classes_factory((
     BT_OT_clear_images,
-    BT_OT_action_image,
+    BT_OT_add_image,
+    BT_OT_remove_image,
+    BT_OT_scan_images,
     Image
 ))
 
@@ -124,7 +161,7 @@ reg, unreg = bpy.utils.register_classes_factory((
 def register():
     reg()
     bpy.types.Scene.bt_images = CollectionProperty(type=Image)
-    bpy.types.Scene.bt_images_action = bpy.props.IntProperty()
+    bpy.types.Scene.bt_images_active = bpy.props.IntProperty()
 
 
 def unregister():

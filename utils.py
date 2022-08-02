@@ -121,9 +121,10 @@ def calc_time(frame: float) -> float:
     settings = bpy.context.scene.bt_settings
     fps = settings.fps
     offset = settings.offset
+    accuracy = settings.accuracy
 
     time = frame / fps + offset
-    time = apply_accuracy(time)
+    time = round(time, accuracy)
     return time
 
 
@@ -131,7 +132,7 @@ def prepare(bake_data: list[ObjData], name: str) -> GEventPool:
     gevent: GEventPool = GEventPool()
     context = bpy.context
     scene = context.scene
-    invers = scene.bt_settings
+    invers = scene.bt_invers
 
     invers = [
         xyz_to_arr(invers.position),

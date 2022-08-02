@@ -1,6 +1,7 @@
 import bpy
-from .image.operators import image_enum
+from .progress_bar import ProgressBar
 from .enums import OBJECT_BAKE_TYPE, OBJECT_RENDER_TYPE
+from .image.operators import image_enum
 
 
 class ObjectSettings(bpy.types.PropertyGroup):
@@ -29,6 +30,7 @@ class SceneSettings(bpy.types.PropertyGroup):
     path: bpy.props.StringProperty(
         subtype='FILE_PATH', default='//untitled.json')
 
+    project_name: bpy.props.StringProperty()
     project_folder: bpy.props.StringProperty(
         subtype='DIR_PATH')
 
@@ -47,12 +49,15 @@ class SceneSettings(bpy.types.PropertyGroup):
 reg, unreg = bpy.utils.register_classes_factory((
     SceneSettings,
     InversSettings,
-    ObjectSettings
+    ObjectSettings,
+    ProgressBar
 ))
 
 
 def register():
     reg()
+    ProgressBar.register()
+
     bpy.types.Scene.bt_settings = bpy.props.PointerProperty(
         type=SceneSettings)
 

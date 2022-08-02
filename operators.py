@@ -1,17 +1,114 @@
+import json
+
+import numpy
+
 import bpy
-from .enums import OBJECT_BAKE_TYPE, OBJECT_TYPE
-from .gconfig.events import GEventPool
-from .utils import bake_object, bake_particle, bake_vertex, prepare, save
+from bpy.types import Object, Context
+from .btio import ProjectFolders
+from .enums import OBJECT_RENDER_TYPE
+
+CONFIG = {
+    "configVersion": 3,
+    "name": "editor.Test1",
+    "info": "Description",
+    "levelResources": [],
+    "tags": [
+        "OneHand"
+    ],
+    "handCount": 1,
+    "moreInfoURL": "",
+    "speed": 15.0,
+    "lives": 5,
+    "maxLives": 5,
+    "musicFile": "music.mp3",
+    "musicTime": 209.867,
+    "iconFile": "icon.png",
+    "environmentType": -1,
+    "unlockConditions": [],
+    "hidden": False,
+    "checkpoints": [],
+}
+ObjVector = tuple[float, float, float]
+ObjBool = tuple[bool, bool, bool]
+ObjStr = tuple[str, str, str]
+ObjTransform = tuple[ObjVector, ObjVector, ObjVector]
+ObjTransformStr = tuple[ObjStr, ObjStr, ObjStr]
+ObjData = tuple[int, tuple[ObjBool, ObjBool, ObjBool], Object]
 
 
-def get_object_type(obj: bpy.types.Object) -> str:
-    if obj.particle_systems:
-        return OBJECT_TYPE.PARTICLE_SYS
+def to_str(func: str, value: tuple[str, str, str], name: str):
+    txt = ','.join(value)
+    return func, f'{name},{txt}'
 
-    if obj.children:
-        return OBJECT_TYPE.PARENT
 
-    return OBJECT_TYPE.OBJECT
+def xyz_to_xzy(value) -> ObjVector:
+    return value[0], value[2], value[1]
+
+
+def invers_convert(value):
+    value = value[0], value[2], value[1]
+    return tuple(-1 if d else 1 for d in value)
+
+
+def calc_time(frame: float) -> float:
+    settings = bpy.context.scene.bt_settings
+    fps = settings.fps
+    offset = settings.offset
+    accuracy = settings.accuracy
+
+    t = frame / fps + offset
+    t = round(t, accuracy)
+    return t
+
+
+def get_position(objects: list[Object], end: int) -> tuple[list[ObjTransform], list[ObjData]]:
+    arr: list[ObjTransform] = []
+    times: ObjData = []
+    for frame in range(0, end):
+        bpy.context.scene.frame_set(frame)
+        for obj in objects:
+            loc: ObjVector = obj.location
+            rot: ObjVector = obj.rotation_euler
+            scale: ObjVector = obj.scale
+
+            vecs = loc, rot, scale
+            vecs: ObjTransform = tuple(xyz_to_xzy(i) for i in vecs)
+            sums = tuple(sum(i) for i in vecs)
+
+            times.append((frame, sums, obj))
+
+            arr.append(vecs)
+
+    arr = numpy.array(arr)
+
+    return arr, times
+
+
+def get_global_div(context: Context):
+    settings = context.scene.bt_settings
+
+    global_location = xyz_to_xzy(settings.global_location)
+    global_rotation = xyz_to_xzy(settings.global_rotation)
+    global_scale = xyz_to_xzy(settings.global_scale)
+
+    return global_location, global_rotation, global_scale
+
+
+def apply_transforms(arr: list[ObjTransform]) -> list[ObjTransformStr]:
+    context = bpy.context
+    scene = context.scene
+
+    invers = scene.bt_invers
+    settings = context.scene.bt_settings
+    accuracy = settings.accuracy
+
+    inv = (invers_convert(invers.position), invers_convert(invers.rotation), invers_convert(invers.scale))
+    global_div = (xyz_to_xzy(settings.global_div),) * 3
+    arr = (arr * inv) / global_div / get_global_div(context)
+    arr = arr.round(accuracy)
+    arr = arr.astype(str)
+
+    return arr
 
 
 class BT_OT_bake_text(bpy.types.Operator):
@@ -20,73 +117,76 @@ class BT_OT_bake_text(bpy.types.Operator):
     fps: bpy.props.FloatProperty(default=10.0)
     offset: bpy.props.FloatProperty(default=1.0)
 
-    @staticmethod
-    def bake_parent(obj: bpy.types.Object):
-        offset: float = bpy.context.scene.bake_text_settings.offset
-
-        arr = []
-        children = obj.children
-        for child in children:
-            arr.append({"time": offset, "data": [
-                "SetParent", f'{child.name},{obj.name}']})
-
-        return arr
-
     def execute(self, context: bpy.types.Context):
-        end = context.scene.frame_end
-        arr = []
+        scene = context.scene
+        end = scene.frame_end
+        settings = context.scene.bt_settings
+
         objects: list[bpy.types.Object] = context.selected_objects
-        ignore: list[bpy.types.Object] = []
-        gevents = GEventPool()
 
-        for obj in objects:
-            ignore.extend(obj.children)
+        arr, times = get_position(objects, end)
+        arr = apply_transforms(arr)
 
-        for obj in objects:
-            ps = obj.particle_systems
+        result = []
+        add = []
+
+        prev_sums = None
+        for index, arr in enumerate(arr):
+            frame, sums, obj = times[index]
+            t = calc_time(frame)
             name = obj.name
-            object_type = get_object_type(obj)
-            bake = None
+            render_type: str = obj.bt_settings.render_type
+            image: str = obj.bt_settings.image
+            s = False, False, False
 
-            if object_type == OBJECT_TYPE.PARENT:
-                arr.extend(self.bake_parent(obj))
-                gevents.add(prepare(bake_object(obj, end), name))
-                continue
+            if prev_sums:
+                s = tuple(numpy.equal(sums, prev_sums))
 
-            if any(i.name == obj.name for i in ignore):
-                continue
+            fs = zip(arr, ('SetPosition', 'SetRotation', 'SetScale'), s)
 
-            if object_type == OBJECT_TYPE.PARTICLE_SYS:
-                bake = bake_particle(obj, end)
-                name = ps.active.settings.name
-            elif obj.bake_text_info.bake_type == OBJECT_BAKE_TYPE.BAKE_LOCATION:
-                bake = bake_object(obj, end)
+            if name not in add:
+                add.append(name)
+                if render_type == OBJECT_RENDER_TYPE.SUN:
+                    result.append({
+                        'time': t,
+                        'data': ('AddEnvironmentObject', f'0,{name}')
+                    })
+                elif render_type == OBJECT_RENDER_TYPE.SPRITE:
+                    result.append({
+                        'time': t,
+                        'data': ('AddEnvironmentSprite', f'{image},{name},0,#FFFFFFFF')
+                    })
 
-            if bake:
-                gevents.add(prepare(bake, name))
+            for vec, text, s in fs:
+                if s:
+                    continue
+                result.append({
+                    'time': t,
+                    'data': to_str(text, vec, name)
+                })
 
-        save(gevents.to_list())
+            prev_sums = sums
 
-        return {'FINISHED'}
+        config = CONFIG.copy()
+        config['events'] = result
+        config['name'] = settings.project_name
 
+        config['levelResources'] = [
+            {
+                'name': i.name,
+                'path': ProjectFolders.images.relative_path(i.name),
+                'type': 'Sprite',
+                'Compress': False
+            }
+            for i in scene.bt_images]
 
-class BT_OT_invers(bpy.types.Operator):
-    bl_label: str = 'BakeText'
-    bl_idname: str = 'bt.invers'
-    vec_name: bpy.props.StringProperty()
-    x: bpy.props.BoolProperty(default=False)
-    y: bpy.props.BoolProperty(default=False)
-    z: bpy.props.BoolProperty(default=False)
+        # bpy.context.window_manager.clipboard = json.dumps(config)
 
-    def execute(self, context: bpy.types.Context):
-        xyz = getattr(context.scene, f'bt_invers_{self.vec_name}')
-        xyz.x = self.x
-        xyz.y = self.y
-        xyz.z = self.z
+        with open(ProjectFolders.root.get_file('config.txt'), mode='w') as f:
+            f.write(json.dumps(config))
         return {'FINISHED'}
 
 
 register, unregister = bpy.utils.register_classes_factory((
     BT_OT_bake_text,
-    BT_OT_invers
 ))
