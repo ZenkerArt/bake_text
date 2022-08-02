@@ -1,4 +1,5 @@
 import bpy
+from ..enums import OBJECT_RENDER_TYPE
 from .base_ui import BasePanel
 
 
@@ -18,3 +19,6 @@ class BT_PT_object_settings(BasePanel, bpy.types.Panel):
 
         layout.label(text='Тип Отображение')
         layout.prop(settings, 'render_type', text='')
+
+        if settings.render_type == OBJECT_RENDER_TYPE.SUN:
+            layout.prop(settings, 'sun_sensitivity')

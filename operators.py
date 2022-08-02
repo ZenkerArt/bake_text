@@ -1,13 +1,9 @@
 import json
-import math
-
-import numpy
 
 import bpy
-from bpy.types import Object, Context
-from .export.bake_object import bake_object
+from bpy.types import Object
 from .btio import ProjectFolders
-from .enums import OBJECT_RENDER_TYPE
+from .export.bake_object import bake_object
 
 CONFIG = {
     "configVersion": 3,
@@ -62,6 +58,28 @@ class BT_OT_bake_text(bpy.types.Operator):
         return {'FINISHED'}
 
 
+class BT_OT_empty(bpy.types.Operator):
+    bl_label: str = 'Create Empty'
+    bl_idname: str = 'bt.empty'
+    fps: bpy.props.FloatProperty(default=10.0)
+    offset: bpy.props.FloatProperty(default=1.0)
+
+    def execute(self, context: bpy.types.Context):
+        obj: Object = context.active_object
+        mesh: bpy.types.Mesh = obj.data
+
+        for vert in mesh.vertices:
+            empty = bpy.data.objects.new(obj.name, None)
+
+            empty.location = obj.matrix_world @ vert.co
+            empty.scale = (.1,) * 3
+            obj.users_collection[0].objects.link(empty)
+            empty.select_set(True)
+
+        return {'FINISHED'}
+
+
 register, unregister = bpy.utils.register_classes_factory((
     BT_OT_bake_text,
+    BT_OT_empty
 ))

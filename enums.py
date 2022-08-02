@@ -19,11 +19,12 @@ class OBJECT_TYPE:
         return cls.OBJECT
 
 
-OBJECT_RENDER_TYPE_TRANS = {'SUN': 'Солнце', 'SPRITE': 'Картинка'}
+OBJECT_RENDER_TYPE_TRANS = {'SATELLITE': 'Сателлит', 'SUN': 'Солнце', 'SPRITE': 'Картинка'}
 
 
 class OBJECT_RENDER_TYPE:
     SUN = 'SUN'
+    SATELLITE = 'SATELLITE'
     SPRITE = 'SPRITE'
 
     @classmethod

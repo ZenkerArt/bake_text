@@ -11,6 +11,7 @@ class ObjectSettings(bpy.types.PropertyGroup):
     ), default=OBJECT_BAKE_TYPE.BAKE_LOCATION)
     image: bpy.props.EnumProperty(items=image_enum)
     render_type: bpy.props.EnumProperty(items=OBJECT_RENDER_TYPE.enum())
+    sun_sensitivity: bpy.props.FloatProperty(default=4)
 
 
 class InversSettings(bpy.types.PropertyGroup):

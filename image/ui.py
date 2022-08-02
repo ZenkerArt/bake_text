@@ -57,7 +57,10 @@ class BT_PT_image(ObjectSettings, Panel):
 
     @classmethod
     def poll(cls, context: Context):
-        settings = context.active_object.bt_settings
+        try:
+            settings = context.active_object.bt_settings
+        except Exception:
+            return False
         return super().poll(context) and settings.render_type == OBJECT_RENDER_TYPE.SPRITE
 
 

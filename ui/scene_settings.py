@@ -1,6 +1,6 @@
 import bpy
 from ..progress_bar import ProgressBar
-from ..operators import BT_OT_bake_text
+from ..operators import BT_OT_bake_text, BT_OT_empty
 from . import BasePanel
 
 
@@ -27,6 +27,7 @@ class BT_PT_scene_settings(BasePanel, bpy.types.Panel):
                  text='Точность после запятой', slider=True)
 
         layout.operator(BT_OT_bake_text.bl_idname, text='Сохранить')
+        layout.operator(BT_OT_empty.bl_idname, text='Create Empty')
 
     @classmethod
     def poll(cls, context: bpy.types.Context):

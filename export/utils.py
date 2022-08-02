@@ -6,7 +6,7 @@ ObjBool = tuple[bool, bool, bool]
 ObjStr = tuple[str, str, str]
 ObjTransform = tuple[ObjVector, ObjVector, ObjVector]
 ObjTransformStr = tuple[ObjStr, ObjStr, ObjStr]
-ObjData = tuple[int, tuple[ObjBool, ObjBool, ObjBool], Object]
+ObjData = tuple[int, tuple[ObjBool, ObjBool, ObjBool], Object, str]
 
 
 def calc_time(frame: float) -> float:
