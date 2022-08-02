@@ -131,6 +131,7 @@ class BT_OT_scan_images(Operator):
     bl_label = 'Scan Images'
 
     def execute(self, context: bpy.types.Context):
+        ImageLoader.load_icons()
         names: list[str] = context.scene.bt_images.keys()
         s = ProjectFolders.images.scan()
         s_names = [i.name for i in s]
