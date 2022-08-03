@@ -3,7 +3,7 @@ from dataclasses import dataclass, field
 from typing import Optional, TYPE_CHECKING, Any, Type, TypeVar
 from bpy.types import Context, Event, Object
 from mathutils import Vector
-from ..objects import Box
+from ..objects import Box, Text, ALIGN, RGB
 
 if TYPE_CHECKING:
     from . import Timeline
@@ -22,21 +22,37 @@ class Keyframe:
     keyframe: Any
     timeline: 'Timeline'
     box: Box = None
+    text: Text = None
 
     def __init__(self, keyframe: Any, timeline: 'Timeline'):
         self.keyframe = keyframe
         self.timeline = timeline
 
-    def get_line(self) -> Box:
+    def get_line(self) -> tuple[Box, Text]:
         timeline = self.timeline
         vec = timeline.matrix * (self.index * timeline.style.line_offset)
+        title_height = self.timeline.style.title_height
 
         if self.box is None:
             self.box = timeline._draw_line(vec)
+            self.box.set_color(timeline.style.keyframe)
+            self.text = Text() \
+                .set_pos(vec.x, title_height / 2) \
+                .set_scale(8) \
+                .set_align(ALIGN.CENTER, ALIGN.CENTER) \
+                .set_text(self.command) \
+                .set_color(RGB.fill(150))
+
         else:
             self.box.set_pos(vec + Vector((0, self.box.pos[1], 0)))
+            self.text.set_pos(vec.x, title_height / 2)
+            self.text.set_text(self.command)
 
-        return self.box
+        return self.box, self.text
+
+    @property
+    def command(self) -> str:
+        return self.keyframe.command
 
     @property
     def index(self) -> int:
@@ -113,10 +129,13 @@ class TimelineControl(TimelineExt):
         offset = timeline.scroll
         diff_scale = mouse / old_scale - offset / old_scale
 
-        if event.type == 'MIDDLEMOUSE':
+        if event.type == 'MIDDLEMOUSE' and event.value == 'PRESS':
             self.click = not self.click
             self.offset = event.mouse_region_x
             self.prev_offset = offset
+
+        if event.type == 'MIDDLEMOUSE' and event.value == 'RELEASE':
+            self.click = False
 
         if event.type == 'WHEELUPMOUSE':
             timeline.zoom *= zoom_factor
@@ -142,18 +161,59 @@ class TimelineMove(TimelineExt):
     click: bool = False
     offset: float = 0
     prev_offset: float = 0
+    _active_keyframe: Optional[Keyframe] = None
+    hover_keyframe: Optional[Keyframe] = None
+
+    def get_keyframe(self, mx: float, my: float):
+        timeline = self.timeline
+        for keyframe in timeline.keyframes.values():
+            keyframe: Keyframe
+            collide = keyframe.box.bounding.collide(mx, my, add_x=10 * timeline.zoom)
+            if collide:
+                return keyframe
+
+    @property
+    def active_keyframe(self) -> Optional[Keyframe]:
+        return self._active_keyframe
+
+    @active_keyframe.setter
+    def active_keyframe(self, value: Keyframe):
+        if self._active_keyframe:
+            self._active_keyframe.box.set_color(self.timeline.style.keyframe)
+
+        self._active_keyframe = value or self._active_keyframe
+
+        if self._active_keyframe and self._active_keyframe.box:
+            self._active_keyframe.box.set_color(self.timeline.style.keyframe_active)
 
     def event(self, context: Context, event: Event):
+        mx, my = event.mouse_region_x, event.mouse_region_y
+        mouse = self.timeline.matrix.transform(mx)
+
         if event.type == 'LEFTMOUSE' and event.value == 'PRESS':
             self.click = True
             self.offset = event.mouse_region_x
             self.prev_offset = context.scene.frame_current
 
+            # if self.active_keyframe:
+            #     self.active_keyframe.box.set_color(self.timeline.style.keyframe)
+
+            keyframe = self.get_keyframe(mx, my)
+            self.hover_keyframe = keyframe
+            self.active_keyframe = keyframe or self.active_keyframe
+
+            # if self.active_keyframe:
+            #     self.active_keyframe.box.set_color(self.timeline.style.keyframe_active)
+
         if event.type == 'LEFTMOUSE' and event.value == 'RELEASE':
             self.click = False
+            self.hover_keyframe = None
+
+        if self.hover_keyframe:
+            self.hover_keyframe.keyframe.index = mouse
+            return
 
         if self.click:
-            mouse = self.timeline.matrix.transform(event.mouse_region_x)
             context.scene.frame_current = mouse
 
     def reset(self, context: Context, event: Event):

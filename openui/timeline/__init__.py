@@ -10,7 +10,7 @@ from .matrix import TimelineMatrix
 from .tstyle import TimelineStyle
 from ..collison import BoundingBox
 from ..objects import Obj, RGB, Box, ALIGN, Text
-from ..timeline.ext import TimelineExt, TimelineActiveObj, TimelineExtGroup, REGION
+from ..timeline.ext import TimelineExt, TimelineActiveObj, TimelineExtGroup, REGION, Keyframe, TimelineMove
 
 _T = TypeVar('_T')
 
@@ -23,35 +23,6 @@ class FrameInfo:
     def __init__(self):
         scene = bpy.context.scene
         self.end, self.start, self.curr = scene.frame_end, scene.frame_start, scene.frame_current
-
-
-class Keyframe:
-    keyframe: Any
-    timeline: 'Timeline'
-    box: Box = None
-
-    def __init__(self, keyframe: Any, timeline: 'Timeline'):
-        self.keyframe = keyframe
-        self.timeline = timeline
-
-    def get_line(self) -> Box:
-        timeline = self.timeline
-        vec = timeline.matrix * (self.index * timeline.style.line_offset)
-
-        if self.box is None:
-            self.box = timeline._draw_line(vec)
-        else:
-            self.box.set_pos(vec + Vector((0, self.box.pos[1], 0)))
-
-        return self.box
-
-    @property
-    def index(self) -> int:
-        return self.keyframe.index
-
-    @property
-    def obj_id(self) -> str:
-        return self.keyframe.obj_id
 
 
 class Timeline(Obj):
@@ -77,8 +48,13 @@ class Timeline(Obj):
         mx, my = event.mouse_region_x, event.mouse_region_y
 
         main_collide = bounding.collide(mx, my)
+        width = 0
 
-        self.set_wh(context.area.width, context.area.height / 4)
+        for i in context.area.regions:
+            if i.type == 'UI':
+                width += i.width
+
+        self.set_wh(context.area.width - width, context.area.height / 4)
         self.ext.event(context, event, REGION.GLOBAL)
 
         if not main_collide:
@@ -101,13 +77,15 @@ class Timeline(Obj):
 
     def add_keyframe(self, index: int):
         obj = self.ext.get_ext(TimelineActiveObj).obj
+        m = self.ext.get_ext(TimelineMove)
 
         ids = str(uuid4())
         keyframe = obj.bt_keyframes.add()
         keyframe.index = index
         keyframe.name = ids
-        # obj.obj_id = EnvironmentObject.active().name
+        keyframe.command = keyframe.label()
         self.keyframes[ids] = Keyframe(keyframe, self)
+        m.active_keyframe = self.keyframes[ids]
 
     def _draw_line(self, vec: Vector):
         style = self.style
@@ -122,6 +100,7 @@ class Timeline(Obj):
         line.set_wh(1, line_top_offset)
         line.set_color(accent - 40)
         line.set_align(ALIGN.CENTER)
+
         return line
 
     def _draw_lines(self):
@@ -191,13 +170,19 @@ class Timeline(Obj):
         text.render()
 
     def _draw_keyframes(self):
+        width, height = self._wh
+
         for i in self.keyframes.values():
-            line = i.get_line()
+
+            line, text = i.get_line()
+
+            if line.pos[0] > width or line.pos[0] < 0:
+                continue
 
             line.set_wh(2)
-            line.set_color(self.style.keyframe)
 
             line.render()
+            text.render()
 
     def render(self):
         style = self.style

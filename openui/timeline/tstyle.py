@@ -16,7 +16,8 @@ class StyleState(Generic[_T]):
 
 class TimelineStyle:
     accent = RGB(66, 109, 174)
-    keyframe = RGB(255, 235, 59)
+    keyframe = RGB(239, 83, 80)
+    keyframe_active = RGB(255, 205, 210)
     bg = RGB.fill(20)
 
     title_height = 35

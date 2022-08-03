@@ -1,4 +1,5 @@
 import bpy
+from ..openui.timeline.ext import TimelineMove
 from ..openui.timeline import Timeline
 from ..ui import BasePanel
 
@@ -19,10 +20,17 @@ class BT_OT_timeline_add_keyframe(bpy.types.Operator):
         if self.action == 'ADD':
             timeline.add_keyframe(context.scene.frame_current)
 
+        if self.action == 'REMOVE':
+
+            for index, key in enumerate(context.active_object.bt_keyframes.keys()):
+                k = timeline.ext.get_ext(TimelineMove).active_keyframe.keyframe
+                if k.name == key:
+                    context.active_object.bt_keyframes.remove(index)
+                    del timeline.keyframes[key]
+
         if self.action == 'CLEAR':
-            # print(dir(context.scene.bt_keyframes))
             timeline.keyframes = {}
-            context.scene.bt_keyframes.clear()
+            context.active_object.bt_keyframes.clear()
         return {'FINISHED'}
 
 
@@ -72,21 +80,34 @@ class BT_PT_timeline(bpy.types.Panel, BasePanel):
         if BT_OT_timeline.render is None:
             self.layout.operator(BT_OT_timeline.bl_idname,
                                  text='Показать таймлайн')
+            return
         else:
             self.layout.operator(BT_OT_timeline.bl_idname,
                                  text='Скрыть таймлайн')
 
+        # event = context.scene.bt_event
+
         o = self.layout.operator(BT_OT_timeline_add_keyframe.bl_idname)
         o.action = 'ADD'
 
+        o = self.layout.operator(BT_OT_timeline_add_keyframe.bl_idname, text='Remove')
+        o.action = 'REMOVE'
+
         o = self.layout.operator(BT_OT_timeline_add_keyframe.bl_idname, text='Clear')
         o.action = 'CLEAR'
+
+        try:
+            t = timeline.ext.get_ext(TimelineMove)
+            if t.active_keyframe:
+                self.layout.prop(t.active_keyframe.keyframe, 'event', text='')
+        except AttributeError:
+            pass
 
 
 reg, unreg = bpy.utils.register_classes_factory((
     BT_OT_timeline,
     BT_PT_timeline,
-    BT_OT_timeline_add_keyframe
+    BT_OT_timeline_add_keyframe,
 ))
 
 

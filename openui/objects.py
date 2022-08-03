@@ -234,3 +234,5 @@ class Text(Obj):
         blf.position(0, px, py, 0)
         blf.color(0, *self.color.rgba)
         blf.draw(0, str(self._text))
+
+        return self
