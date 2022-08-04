@@ -10,23 +10,34 @@ class EVENTS:
         for key, value in cls.__dict__.items():
             if key.startswith('_') or not isinstance(value, str):
                 continue
-            arr.append((key, value, ''))
+            arr.append((key, cls.normal_name(value), ''))
 
         return tuple(arr)
 
+    @staticmethod
+    def normal_name(name: str):
+        n = {
+            'AddEnvironmentObject': 'Add Object',
+            'AddEnvironmentSprite': 'Add Image',
+            'RemoveEnvironmentObject': 'Remove Object',
+            'SetEnvSpriteImage': 'Replace Image',
+            'SetSunSensitivity': 'Sun Sens',
+
+        }
+        return n[name]
+
 
 class EVENTS_GLOBAL(EVENTS):
-    CLEAR_OBJECTS: str = 'ClearEnvironment'
-    SET_PLAYER_DIST: str = 'SetPlayerDistance'
+    ClearEnvironment: str = 'ClearEnvironment'
+    SetPlayerDistance: str = 'SetPlayerDistance'
 
 
 class EVENTS_LOCAL(EVENTS):
     AddEnvironmentObject: str = 'AddEnvironmentObject'
     AddEnvironmentSprite: str = 'AddEnvironmentSprite'
-    SetEnvSpriteImage: str = 'SetEnvSpriteImage'
-
-    SetSunSensitivity: str = 'SetSunSensitivity'
     RemoveEnvironmentObject: str = 'RemoveEnvironmentObject'
+    SetEnvSpriteImage: str = 'SetEnvSpriteImage'
+    SetSunSensitivity: str = 'SetSunSensitivity'
 
 
 class OBJECT_TYPE:

@@ -75,7 +75,7 @@ class Timeline(Obj):
         mat = trans @ scale
         return TimelineMatrix(mat, self)
 
-    def add_keyframe(self, index: int):
+    def add_keyframe(self, index: int, event: str = None):
         obj = self.ext.get_ext(TimelineActiveObj).obj
         m = self.ext.get_ext(TimelineMove)
 
@@ -84,6 +84,7 @@ class Timeline(Obj):
         keyframe.index = index
         keyframe.name = ids
         keyframe.command = keyframe.label()
+        keyframe.event = event or keyframe.event
         self.keyframes[ids] = Keyframe(keyframe, self)
         m.active_keyframe = self.keyframes[ids]
 

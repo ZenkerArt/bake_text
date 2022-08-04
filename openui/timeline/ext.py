@@ -1,6 +1,7 @@
 from abc import ABC, abstractmethod
-from dataclasses import dataclass, field
 from typing import Optional, TYPE_CHECKING, Any, Type, TypeVar
+
+import bpy
 from bpy.types import Context, Event, Object
 from mathutils import Vector
 from ..objects import Box, Text, ALIGN, RGB
@@ -163,6 +164,8 @@ class TimelineMove(TimelineExt):
     prev_offset: float = 0
     _active_keyframe: Optional[Keyframe] = None
     hover_keyframe: Optional[Keyframe] = None
+    settings_keyframe: Optional[Keyframe] = None
+    mouse: int = 0
 
     def get_keyframe(self, mx: float, my: float):
         timeline = self.timeline
@@ -189,25 +192,27 @@ class TimelineMove(TimelineExt):
     def event(self, context: Context, event: Event):
         mx, my = event.mouse_region_x, event.mouse_region_y
         mouse = self.timeline.matrix.transform(mx)
+        self.mouse = mouse
 
         if event.type == 'LEFTMOUSE' and event.value == 'PRESS':
             self.click = True
             self.offset = event.mouse_region_x
             self.prev_offset = context.scene.frame_current
-
-            # if self.active_keyframe:
-            #     self.active_keyframe.box.set_color(self.timeline.style.keyframe)
-
             keyframe = self.get_keyframe(mx, my)
             self.hover_keyframe = keyframe
             self.active_keyframe = keyframe or self.active_keyframe
 
-            # if self.active_keyframe:
-            #     self.active_keyframe.box.set_color(self.timeline.style.keyframe_active)
-
         if event.type == 'LEFTMOUSE' and event.value == 'RELEASE':
             self.click = False
             self.hover_keyframe = None
+
+        if event.type == 'RIGHTMOUSE' and event.value == 'RELEASE':
+            keyframe = self.get_keyframe(mx, my)
+            self.settings_keyframe = keyframe
+            if keyframe:
+                bpy.ops.wm.call_panel(name='BT_PT_settings_menu')
+            else:
+                bpy.ops.wm.call_menu(name='BT_MT_context_menu')
 
         if self.hover_keyframe:
             self.hover_keyframe.keyframe.index = mouse

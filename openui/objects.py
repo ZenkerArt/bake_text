@@ -145,7 +145,7 @@ class Shape(Obj, ABC):
     def draw(self) -> DrawReturn:
         pass
 
-    def render(self):
+    def calc(self):
         vertices, indices = self.draw()
         vert = []
         sx, sy = self.scale
@@ -170,6 +170,10 @@ class Shape(Obj, ABC):
         b = (*a.min(axis=0), *a.max(axis=0))
         self.bounding = BoundingBox(*b)
 
+        return vert, indices
+
+    def render(self):
+        vert, indices = self.calc()
         shader = from_builtin('2D_UNIFORM_COLOR')
 
         batch = batch_for_shader(
