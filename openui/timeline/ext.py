@@ -228,17 +228,20 @@ class TimelineMove(TimelineExt):
 class TimelineActiveObj(TimelineExt):
     obj: Object = None
 
-    def event(self, context: Context, event: Event):
+    def update(self, context: Context):
         if context.active_object is None:
-            return
-
-        if self.obj and self.obj.name == context.active_object.name:
             return
 
         timeline = self.timeline
         obj = context.active_object
-        self.obj = obj
         timeline.keyframes = {key: Keyframe(value, timeline) for key, value in obj.bt_keyframes.items()}
+
+    def event(self, context: Context, event: Event):
+        if self.obj and self.obj.name == context.active_object.name:
+            return
+        obj = context.active_object
+        self.obj = obj
+        self.update(context)
 
 
 TimelineExtGroup.local.extend([TimelineControl, TimelineMove])

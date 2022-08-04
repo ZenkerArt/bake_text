@@ -2,7 +2,7 @@ import bpy
 from ..enums import EVENTS_LOCAL
 from ..image.operators import ImageLoader
 from ..openui.timeline import Timeline
-from ..openui.timeline.ext import TimelineMove
+from ..openui.timeline.ext import TimelineMove, TimelineActiveObj
 from ..ui import BasePanel
 
 timeline: Timeline = None
@@ -21,17 +21,20 @@ class BT_OT_timeline_add_keyframe(bpy.types.Operator):
 
     def execute(self, context: bpy.types.Context):
         try:
-            t = timeline.ext.get_ext(TimelineMove)
-            if self.action == 'ADD_MOUSE':
-                timeline.add_keyframe(t.mouse, None or self.event)
+            timeline_move = timeline.ext.get_ext(TimelineMove)
+            timeline_active_obj = timeline.ext.get_ext(TimelineActiveObj)
+            k = timeline_move.settings_keyframe
 
-            if self.action == 'REMOVE_MOUSE':
+            if self.action == 'ADD_MOUSE':
+                timeline.add_keyframe(timeline_move.mouse, None or self.event)
+
+            if self.action == 'REMOVE_MOUSE' and k:
                 for index, key in enumerate(context.active_object.bt_keyframes.keys()):
-                    k = timeline.ext.get_ext(TimelineMove).settings_keyframe.keyframe
-                    if k.name == key:
+                    if k.keyframe.name == key:
                         context.active_object.bt_keyframes.remove(index)
-                        del timeline.keyframes[key]
-        except AttributeError:
+                        timeline_active_obj.update(context)
+        except AttributeError as e:
+            print(e)
             pass
 
         if self.action == 'ADD':
@@ -101,15 +104,7 @@ class BT_PT_timeline(bpy.types.Panel, BasePanel):
             self.layout.operator(BT_OT_timeline.bl_idname,
                                  text='Скрыть таймлайн')
 
-        # event = context.scene.bt_event
-
-        o = self.layout.operator(BT_OT_timeline_add_keyframe.bl_idname)
-        o.action = 'ADD'
-
-        o = self.layout.operator(BT_OT_timeline_add_keyframe.bl_idname, text='Remove')
-        o.action = 'REMOVE'
-
-        o = self.layout.operator(BT_OT_timeline_add_keyframe.bl_idname, text='Clear')
+        o = self.layout.operator(BT_OT_timeline_add_keyframe.bl_idname, text='Удалить все ключи')
         o.action = 'CLEAR'
 
         try:

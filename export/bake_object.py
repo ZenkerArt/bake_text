@@ -129,7 +129,7 @@ def bake_object(objects: list[Object]) -> dict:
                 if r:
                     for vec, text, s in tt:
                         result.append({
-                            'time': calc_time(keyframe.index),
+                            'time': calc_time(keyframe.index) + .1,
                             'data': to_str(text, vec, name)
                         })
 

@@ -14,11 +14,6 @@ class BT_PT_object_settings(BasePanel, bpy.types.Panel):
         if settings is None:
             layout.label(text='Объект не выбран')
             return
+
         layout.label(text='Тип Запечьки')
         layout.prop(settings, 'bake_type', text='')
-
-        layout.label(text='Тип Отображение')
-        layout.prop(settings, 'render_type', text='')
-
-        if settings.render_type == OBJECT_RENDER_TYPE.SUN:
-            layout.prop(settings, 'sun_sensitivity')
