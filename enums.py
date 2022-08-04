@@ -22,7 +22,8 @@ class EVENTS:
             'RemoveEnvironmentObject': 'Remove Object',
             'SetEnvSpriteImage': 'Replace Image',
             'SetSunSensitivity': 'Sun Sens',
-
+            'ClearEnvironment': 'Del All Obj',
+            'SetPlayerDistance': 'Player Dist'
         }
         return n[name]
 

@@ -1,5 +1,4 @@
 import bpy
-from .progress_bar import ProgressBar
 from .enums import OBJECT_BAKE_TYPE, OBJECT_RENDER_TYPE
 from .image.operators import image_enum
 
@@ -51,13 +50,11 @@ reg, unreg = bpy.utils.register_classes_factory((
     SceneSettings,
     InversSettings,
     ObjectSettings,
-    ProgressBar
 ))
 
 
 def register():
     reg()
-    ProgressBar.register()
 
     bpy.types.Scene.bt_settings = bpy.props.PointerProperty(
         type=SceneSettings)

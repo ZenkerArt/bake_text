@@ -1,5 +1,4 @@
 import bpy
-from ..enums import OBJECT_RENDER_TYPE
 from .base_ui import BasePanel
 
 

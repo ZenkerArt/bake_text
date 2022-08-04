@@ -4,12 +4,18 @@ import bpy
 from bpy.types import Object
 from .export_methods import save_obj, save_vertex, save_particle
 from .utils import apply_transforms, calc_time, ObjTransform
-from ..enums import OBJECT_BAKE_TYPE, EVENTS_LOCAL
+from ..enums import OBJECT_BAKE_TYPE
 
 
 def to_str(func: str, value: tuple[str, str, str], name: str):
     txt = ','.join(value)
     return func, f'{name},{txt}'
+
+
+def apply_round(value: float):
+    settings = bpy.context.scene.bt_settings
+    accuracy = settings.accuracy
+    return round(value, accuracy)
 
 
 def get_position(objects: list[Object], end: int) -> tuple[list[ObjTransform], list]:
@@ -67,9 +73,10 @@ class EventToString:
 
     @staticmethod
     def SetSunSensitivity(keyframe, result, name, skip_event=None):
+        sun_sens = apply_round(keyframe.sun_sensitivity)
         result.append({
             'time': calc_time(keyframe.index),
-            'data': ('SetSunSensitivity', f'{name},{keyframe.sun_sensitivity}')
+            'data': ('SetSunSensitivity', f'{name},{sun_sens}')
         })
 
     @staticmethod
@@ -77,9 +84,10 @@ class EventToString:
         color = numpy.array(keyframe.color) * 255
         color = color.astype(int)
         color = '#%02x%02x%02xff' % tuple(color)
+        sun_sens = apply_round(keyframe.sun_sensitivity)
         result.append({
             'time': calc_time(keyframe.index),
-            'data': ('AddEnvironmentSprite', f'{keyframe.image},{name},{keyframe.sun_sensitivity},{color.upper()}')
+            'data': ('AddEnvironmentSprite', f'{keyframe.image},{name},{sun_sens},{color.upper()}')
         })
         skip_event[keyframe.index] = False
         return True
@@ -89,6 +97,20 @@ class EventToString:
         result.append({
             'time': calc_time(keyframe.index),
             'data': ('SetEnvSpriteImage', f'{name},{keyframe.image}')
+        })
+
+    @staticmethod
+    def SetPlayerDistance(keyframe, result):
+        result.append({
+            'time': calc_time(keyframe.index),
+            'data': ('SetPlayerDistance', f'{keyframe.player_dist}')
+        })
+
+    @staticmethod
+    def ClearEnvironment(keyframe, result):
+        result.append({
+            'time': calc_time(keyframe.index),
+            'data': ('ClearEnvironment', '')
         })
 
 
@@ -107,33 +129,38 @@ def bake_object(objects: list[Object]) -> dict:
     skip_event = {}
     skip = True
     last_transforms = None
+
+    for i in context.scene.bt_keyframes:
+        event_func = getattr(EventToString, i.event)
+        event_func(i, result)
+
     for index, arr in enumerate(arr):
-        frame, sums, obj, name, alive_state = times[index]
+        frame, sums, obj, name = times[index]
         t = calc_time(frame)
 
-        s = False, False, False
+        sums = False, False, False
 
         if prev_sums:
-            s = tuple(numpy.equal(sums, prev_sums))
+            sums = tuple(numpy.equal(sums, prev_sums))
 
-        transforms = tuple(zip(arr, ('SetPosition', 'SetRotation', 'SetScale'), s))
+        transforms = tuple(zip(arr, ('SetPosition', 'SetRotation', 'SetScale'), sums))
 
         if name not in add:
             skip_event = {}
             add.append(name)
             for keyframe in obj.bt_keyframes.values():
                 event = keyframe.event
-                method = getattr(EventToString, event)
-                r = method(keyframe, result, name, skip_event)
-                tt = transforms or last_transforms
-                if r:
-                    for vec, text, s in tt:
+                event_func = getattr(EventToString, event)
+                event_result = event_func(keyframe, result, name, skip_event)
+
+                trans = transforms or last_transforms
+                if event_result:
+                    for vec, text, sums in trans:
                         result.append({
                             'time': calc_time(keyframe.index) + .1,
                             'data': to_str(text, vec, name)
                         })
 
-        # skip = skip_event.get(frame) or skip
         d = skip_event.get(frame)
         if d is not None:
             skip = d
@@ -141,8 +168,8 @@ def bake_object(objects: list[Object]) -> dict:
         if skip:
             continue
 
-        for vec, text, s in transforms:
-            if s:
+        for vec, text, sums in transforms:
+            if sums:
                 continue
             result.append({
                 'time': t,

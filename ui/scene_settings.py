@@ -1,5 +1,4 @@
 import bpy
-from ..progress_bar import ProgressBar
 from ..operators import BT_OT_bake_text, BT_OT_empty
 from . import BasePanel
 

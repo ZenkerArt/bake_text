@@ -5,8 +5,8 @@ from mathutils import Vector
 from .utils import ObjVector, ObjTransform, xyz_to_xzy
 
 
-def obj_params(obj: Object, frame: int, sums: list, name: str, alive_state=None):
-    return frame, sums, obj, name, alive_state
+def obj_params(obj: Object, frame: int, sums: list, name: str):
+    return frame, sums, obj, name
 
 
 def calc_sums(loc: ObjVector, rot: ObjVector, scale: ObjVector):
@@ -58,7 +58,7 @@ def save_particle(obj: Object, frame, arr, times, dg=None):
 
         sums, vecs = calc_sums(loc, rot, scale)
 
-        params = obj_params(obj, frame, sums, f'{ev_obj.name}_{index}', alive_state=i.alive_state)
+        params = obj_params(obj, frame, sums, f'{ev_obj.name}_{index}')
         times.append(params)
 
         arr.append(vecs)

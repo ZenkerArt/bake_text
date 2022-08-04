@@ -1,11 +1,13 @@
 import bpy
-from ..enums import EVENTS_LOCAL
+from .properties import TIMELINE_STATE
+from ..enums import EVENTS_LOCAL, EVENTS_GLOBAL
 from ..image.operators import ImageLoader
 from ..openui.timeline import Timeline
 from ..openui.timeline.ext import TimelineMove, TimelineActiveObj
 from ..ui import BasePanel
 
 timeline: Timeline = None
+switch = False
 
 
 def draw():
@@ -20,36 +22,43 @@ class BT_OT_timeline_add_keyframe(bpy.types.Operator):
     event: bpy.props.StringProperty()
 
     def execute(self, context: bpy.types.Context):
-        try:
-            timeline_move = timeline.ext.get_ext(TimelineMove)
-            timeline_active_obj = timeline.ext.get_ext(TimelineActiveObj)
-            k = timeline_move.settings_keyframe
+        store = context.scene.bt_store_timeline
+        global switch
+        local_keyframes = context.active_object.bt_keyframes
+        global_keyframes = store.keyframes()
 
-            if self.action == 'ADD_MOUSE':
-                timeline.add_keyframe(timeline_move.mouse, None or self.event)
+        if store.state == TIMELINE_STATE.LOCAL:
+            keyframes = local_keyframes
+        elif store.state == TIMELINE_STATE.GLOBAL:
+            keyframes = global_keyframes
 
-            if self.action == 'REMOVE_MOUSE' and k:
-                for index, key in enumerate(context.active_object.bt_keyframes.keys()):
-                    if k.keyframe.name == key:
-                        context.active_object.bt_keyframes.remove(index)
-                        timeline_active_obj.update(context)
-        except AttributeError as e:
-            print(e)
-            pass
+        timeline_move = timeline.ext.get_ext(TimelineMove)
+        timeline_active_obj = timeline.ext.get_ext(TimelineActiveObj)
 
-        if self.action == 'ADD':
-            timeline.add_keyframe(context.scene.frame_current)
+        k = timeline_move.settings_keyframe
+        if self.action == 'ADD_MOUSE':
+            timeline.add_keyframe(timeline_move.mouse,
+                                  None or self.event, keyframes=keyframes)
 
-        if self.action == 'REMOVE':
-            for index, key in enumerate(context.active_object.bt_keyframes.keys()):
-                k = timeline.ext.get_ext(TimelineMove).active_keyframe.keyframe
-                if k.name == key:
-                    context.active_object.bt_keyframes.remove(index)
-                    del timeline.keyframes[key]
+        if self.action == 'REMOVE_MOUSE' and k:
+            for index, key in enumerate(keyframes):
+                if k.keyframe.name == key.name:
+                    keyframes.remove(index)
+                    timeline_active_obj.update(context, keyframes)
+
+        if self.action == 'SWITCH':
+            # breakpoint()
+            switch = not switch
+            store.state = TIMELINE_STATE.GLOBAL if switch else TIMELINE_STATE.LOCAL
+
+            if store.state == TIMELINE_STATE.GLOBAL:
+                timeline_active_obj.update(context, global_keyframes)
+            elif store.state == TIMELINE_STATE.LOCAL:
+                timeline_active_obj.update(context, local_keyframes)
 
         if self.action == 'CLEAR':
             timeline.keyframes = {}
-            context.active_object.bt_keyframes.clear()
+            keyframes.clear()
         return {'FINISHED'}
 
 
@@ -104,7 +113,19 @@ class BT_PT_timeline(bpy.types.Panel, BasePanel):
             self.layout.operator(BT_OT_timeline.bl_idname,
                                  text='Скрыть таймлайн')
 
-        o = self.layout.operator(BT_OT_timeline_add_keyframe.bl_idname, text='Удалить все ключи')
+        store = context.scene.bt_store_timeline
+
+        text = {
+            TIMELINE_STATE.GLOBAL: 'Локальный Таймлайн',
+            TIMELINE_STATE.LOCAL: 'Глобальный Таймлайн'
+        }
+
+        o = self.layout.operator(BT_OT_timeline_add_keyframe.bl_idname,
+                                 text=text[store.state])
+        o.action = 'SWITCH'
+
+        o = self.layout.operator(
+            BT_OT_timeline_add_keyframe.bl_idname, text='Удалить все ключи')
         o.action = 'CLEAR'
 
         try:
@@ -117,34 +138,51 @@ class BT_PT_timeline(bpy.types.Panel, BasePanel):
 
 class BT_PT_settings_menu(bpy.types.Panel):
     bl_label = "Context Menu"
-    # bl_idname = "bt.settings_menu"
     bl_space_type = 'VIEW_3D'
     bl_region_type = 'WINDOW'
 
-    def draw(self, context):
+    def local_menu(self):
+        t = timeline.ext.get_ext(TimelineMove)
         layout = self.layout
 
+        keyframe = t.settings_keyframe.keyframe
+        layout.prop(keyframe, 'event', text='')
+
+        if keyframe.event == EVENTS_LOCAL.AddEnvironmentSprite or keyframe.event == EVENTS_LOCAL.SetEnvSpriteImage:
+            layout.template_icon(ImageLoader.get_icon(
+                keyframe.image).icon_id, scale=10)
+            layout.prop(keyframe, 'image', text='')
+
+        if keyframe.event == EVENTS_LOCAL.AddEnvironmentSprite:
+            layout.prop(keyframe, 'color', text='')
+
+        if keyframe.event == EVENTS_LOCAL.SetSunSensitivity or keyframe.event == EVENTS_LOCAL.AddEnvironmentSprite:
+            layout.prop(keyframe, 'sun_sensitivity', text='')
+
+    def global_menu(self):
+        t = timeline.ext.get_ext(TimelineMove)
+        layout = self.layout
+
+        keyframe = t.settings_keyframe.keyframe
+        layout.prop(keyframe, 'event', text='')
+
+        if keyframe.event == EVENTS_GLOBAL.SetPlayerDistance:
+            layout.prop(keyframe, 'player_dist', text='')
+
+    def draw(self, context):
+        store = context.scene.bt_store_timeline
         try:
-            t = timeline.ext.get_ext(TimelineMove)
             ImageLoader.init()
-            if t.settings_keyframe:
-                keyframe = t.settings_keyframe.keyframe
-                layout.prop(keyframe, 'event', text='')
-
-                if keyframe.event == EVENTS_LOCAL.AddEnvironmentSprite or keyframe.event == EVENTS_LOCAL.SetEnvSpriteImage:
-                    layout.template_icon(ImageLoader.get_icon(keyframe.image).icon_id, scale=10)
-                    layout.prop(keyframe, 'image', text='')
-
-                if keyframe.event == EVENTS_LOCAL.AddEnvironmentSprite:
-                    layout.prop(keyframe, 'color', text='')
-
-                if keyframe.event == EVENTS_LOCAL.SetSunSensitivity or keyframe.event == EVENTS_LOCAL.AddEnvironmentSprite:
-                    layout.prop(keyframe, 'sun_sensitivity', text='')
+            if store.state == TIMELINE_STATE.LOCAL:
+                self.local_menu()
+            elif store.state == TIMELINE_STATE.GLOBAL:
+                self.global_menu()
 
         except AttributeError:
             pass
 
-        o = self.layout.operator(BT_OT_timeline_add_keyframe.bl_idname, text='Remove')
+        o = self.layout.operator(
+            BT_OT_timeline_add_keyframe.bl_idname, text='Remove')
         o.action = 'REMOVE_MOUSE'
 
 
@@ -153,9 +191,15 @@ class BT_MT_context_menu(bpy.types.Menu):
 
     def draw(self, context):
         layout = self.layout
+        store = context.scene.bt_store_timeline
+        events = EVENTS_LOCAL
 
-        for i in EVENTS_LOCAL.enum():
-            o = layout.operator(BT_OT_timeline_add_keyframe.bl_idname, text=i[1])
+        if store.state == TIMELINE_STATE.GLOBAL:
+            events = EVENTS_GLOBAL
+
+        for i in events.enum():
+            o = layout.operator(
+                BT_OT_timeline_add_keyframe.bl_idname, text=i[1])
             o.action = 'ADD_MOUSE'
             o.event = i[0]
 
