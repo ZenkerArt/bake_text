@@ -1,10 +1,12 @@
+from datetime import timedelta
 from typing import Any, TYPE_CHECKING, Optional
 from uuid import uuid4
 
-from ....anim.timeline_states import TimelineState
 from mathutils import Vector
 from .base_conmponet import BaseComponent
 from ...objects import Box, Text
+from ....anim.timeline_states import TimelineState
+from ....export.utils import calc_time
 
 if TYPE_CHECKING:
     from .. import Timeline
@@ -29,7 +31,6 @@ class Keyframe:
             self.box = timeline.shapes.draw_line(vec)
             self.box.set_color(timeline.style.keyframe)
             self.text = self.timeline.shapes.draw_text_in_footer(vec.x, self.command)
-
         else:
             self.box.set_pos(vec + Vector((0, self.box.pos[1], 0)))
             self.text.set_pos(vec.x, title_height / 2)
@@ -61,7 +62,7 @@ class TimelineKeyframes(BaseComponent):
         timeline = self.timeline
         for keyframe in self.keyframes.values():
             keyframe: Keyframe
-            collide = keyframe.box.bounding.collide(x, y, add_x=10 * timeline.zoom)
+            collide = keyframe.box.bounding.collide(x, y, add_x=20)
             if collide:
                 return keyframe
 
@@ -109,3 +110,5 @@ class TimelineKeyframes(BaseComponent):
 
             line.render()
             text.render()
+            tt = timedelta(seconds=round(calc_time(i.index)))
+            self.timeline.shapes.draw_text_in_header(text.pos[0], str(tt)).render()
