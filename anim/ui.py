@@ -1,7 +1,7 @@
 import bpy
 from ..openui.timeline import TimelineMove
 from .g import Global
-from .operators import BT_OT_timeline_add_keyframe, BT_OT_timeline
+from .operators import BT_OT_timeline_action, BT_OT_timeline
 from .properties import TIMELINE_STATE
 from ..ui import BasePanel
 
@@ -25,12 +25,12 @@ class BT_PT_timeline(bpy.types.Panel, BasePanel):
             TIMELINE_STATE.LOCAL: 'Глобальный Таймлайн'
         }
 
-        o = self.layout.operator(BT_OT_timeline_add_keyframe.bl_idname,
+        o = self.layout.operator(BT_OT_timeline_action.bl_idname,
                                  text=text[store.state])
         o.action = 'SWITCH'
 
         o = self.layout.operator(
-            BT_OT_timeline_add_keyframe.bl_idname, text='Удалить все ключи')
+            BT_OT_timeline_action.bl_idname, text='Удалить все ключи')
         o.action = 'CLEAR'
 
         try:

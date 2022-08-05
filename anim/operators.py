@@ -1,7 +1,6 @@
 import bpy
-from ..openui.timeline import TimelineMove, TimelineActiveObj
 from .g import Global
-from .properties import TIMELINE_STATE
+from .timeline_states import TimelineState, TIMELINE_STATE
 
 
 class BT_OT_timeline(bpy.types.Operator):
@@ -31,54 +30,41 @@ class BT_OT_timeline(bpy.types.Operator):
         return {'RUNNING_MODAL'}
 
 
-class BT_OT_timeline_add_keyframe(bpy.types.Operator):
-    bl_label: str = 'Add Keyframe'
-    bl_idname: str = 'bt.add_keyframe'
+class BT_OT_timeline_action(bpy.types.Operator):
+    bl_label: str = 'Timeline Action'
+    bl_idname: str = 'bt.timeline_action'
 
     action: bpy.props.StringProperty()
     event: bpy.props.StringProperty()
 
     def execute(self, context: bpy.types.Context):
         timeline = Global.timeline
-        store = context.scene.bt_store_timeline
-        local_keyframes = context.active_object.bt_keyframes
-        global_keyframes = store.keyframes()
+        mouse = timeline.keyframe.mouse_pos
 
-        if store.state == TIMELINE_STATE.LOCAL:
-            keyframes = local_keyframes
-        elif store.state == TIMELINE_STATE.GLOBAL:
-            keyframes = global_keyframes
+        keyframes = TimelineState.active_keyframes()
+        context_keyframe = timeline.keyframe.context_keyframe
 
-        timeline_move = timeline.ext.get_ext(TimelineMove)
-        timeline_active_obj = timeline.ext.get_ext(TimelineActiveObj)
-
-        k = timeline_move.settings_keyframe
         if self.action == 'ADD_MOUSE':
-            timeline.add_keyframe(timeline_move.mouse,
-                                  None or self.event, keyframes=keyframes)
+            timeline.add_keyframe(mouse, self.event, keyframes)
 
-        if self.action == 'REMOVE_MOUSE' and k:
+        if self.action == 'REMOVE_MOUSE' and context_keyframe:
             for index, key in enumerate(keyframes):
-                if k.keyframe.name == key.name:
+                if context_keyframe.name == key.name:
                     keyframes.remove(index)
-                    timeline_active_obj.update(context, keyframes)
+                    timeline.keyframe.update(keyframes)
 
         if self.action == 'SWITCH':
             Global.switch = not Global.switch
-            store.state = TIMELINE_STATE.GLOBAL if Global.switch else TIMELINE_STATE.LOCAL
-
-            if store.state == TIMELINE_STATE.GLOBAL:
-                timeline_active_obj.update(context, global_keyframes)
-            elif store.state == TIMELINE_STATE.LOCAL:
-                timeline_active_obj.update(context, local_keyframes)
+            TimelineState.set_state(TIMELINE_STATE.GLOBAL if Global.switch else TIMELINE_STATE.OBJECT)
+            timeline.keyframe.update(TimelineState.active_keyframes())
 
         if self.action == 'CLEAR':
-            timeline.keyframes = {}
+            timeline.keyframe.keyframes = {}
             keyframes.clear()
         return {'FINISHED'}
 
 
 register, unregister = bpy.utils.register_classes_factory((
     BT_OT_timeline,
-    BT_OT_timeline_add_keyframe
+    BT_OT_timeline_action
 ))

@@ -14,9 +14,19 @@ _T = TypeVar('_T')
 ExtList = list[Type['TimelineExt']]
 
 
+class FrameInfo:
+    start: int
+    end: int
+    curr: int
+
+    def __init__(self):
+        scene = bpy.context.scene
+        self.end, self.start, self.curr = scene.frame_end, scene.frame_start, scene.frame_current
+
+
 class REGION:
     GLOBAL = 'GLOBAL'
-    LOCAL = 'LOCAL'
+    LOCAL = 'OBJECT'
 
 
 class Keyframe:
@@ -35,14 +45,9 @@ class Keyframe:
         title_height = self.timeline.style.title_height
 
         if self.box is None:
-            self.box = timeline._draw_line(vec)
+            self.box = timeline.shapes.draw_line(vec)
             self.box.set_color(timeline.style.keyframe)
-            self.text = Text() \
-                .set_pos(vec.x, title_height / 2) \
-                .set_scale(8) \
-                .set_align(ALIGN.CENTER, ALIGN.CENTER) \
-                .set_text(self.command) \
-                .set_color(RGB.fill(150))
+            self.text = self.timeline.shapes.draw_text_in_footer(vec.x, self.command)
 
         else:
             self.box.set_pos(vec + Vector((0, self.box.pos[1], 0)))
@@ -161,54 +166,30 @@ class TimelineMove(TimelineExt):
     zoom_factor = 1.1
     click: bool = False
     offset: float = 0
-    prev_offset: float = 0
     _active_keyframe: Optional[Keyframe] = None
     hover_keyframe: Optional[Keyframe] = None
     settings_keyframe: Optional[Keyframe] = None
     mouse: int = 0
 
-    def get_keyframe(self, mx: float, my: float):
-        timeline = self.timeline
-        for keyframe in timeline.keyframes.values():
-            keyframe: Keyframe
-            collide = keyframe.box.bounding.collide(mx, my, add_x=10 * timeline.zoom)
-            if collide:
-                return keyframe
-
-    @property
-    def active_keyframe(self) -> Optional[Keyframe]:
-        return self._active_keyframe
-
-    @active_keyframe.setter
-    def active_keyframe(self, value: Keyframe):
-        if self._active_keyframe:
-            self._active_keyframe.box.set_color(self.timeline.style.keyframe)
-
-        self._active_keyframe = value or self._active_keyframe
-
-        if self._active_keyframe and self._active_keyframe.box:
-            self._active_keyframe.box.set_color(self.timeline.style.keyframe_active)
-
     def event(self, context: Context, event: Event):
         mx, my = event.mouse_region_x, event.mouse_region_y
         mouse = self.timeline.matrix.transform(mx)
-        self.mouse = mouse
+        self.timeline.keyframe.mouse_pos = mouse
 
         if event.type == 'LEFTMOUSE' and event.value == 'PRESS':
             self.click = True
-            self.offset = event.mouse_region_x
-            self.prev_offset = context.scene.frame_current
-            keyframe = self.get_keyframe(mx, my)
+            keyframe = self.timeline.keyframe.get_keyframe_by_cord(mx, my)
             self.hover_keyframe = keyframe
-            self.active_keyframe = keyframe or self.active_keyframe
+            self.timeline.keyframe.active_keyframe = keyframe
 
         if event.type == 'LEFTMOUSE' and event.value == 'RELEASE':
             self.click = False
             self.hover_keyframe = None
 
         if event.type == 'RIGHTMOUSE' and event.value == 'RELEASE':
-            keyframe = self.get_keyframe(mx, my)
-            self.settings_keyframe = keyframe
+            keyframe = self.timeline.keyframe.get_keyframe_by_cord(mx, my)
+            self.timeline.keyframe.context_keyframe = keyframe
+
             if keyframe:
                 bpy.ops.wm.call_panel(name='BT_PT_settings_menu')
             else:
@@ -228,19 +209,12 @@ class TimelineMove(TimelineExt):
 class TimelineActiveObj(TimelineExt):
     obj: Object = None
 
-    def update(self, context: Context, keyframes):
-        if context.active_object is None:
-            return
-
-        timeline = self.timeline
-        timeline.keyframes = {key: Keyframe(value, timeline) for key, value in keyframes.items()}
-
     def event(self, context: Context, event: Event):
         if self.obj and self.obj.name == context.active_object.name:
             return
         obj = context.active_object
         self.obj = obj
-        self.update(context, obj.bt_keyframes)
+        self.timeline.keyframe.update(obj.bt_keyframes)
 
 
 TimelineExtGroup.local.extend([TimelineControl, TimelineMove])

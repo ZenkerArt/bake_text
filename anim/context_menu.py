@@ -2,22 +2,21 @@ import bpy
 from bpy.types import Panel, Menu
 from ..openui.timeline import TimelineMove
 from .g import Global
-from .operators import BT_OT_timeline_add_keyframe
+from .operators import BT_OT_timeline_action
 from .properties import TIMELINE_STATE
 from ..enums import EVENTS_LOCAL, EVENTS_GLOBAL
 from ..image.operators import ImageLoader
 
 
 class BT_PT_settings_menu(Panel):
-    bl_label = "Context Menu"
+    bl_label = 'Context Menu'
     bl_space_type = 'VIEW_3D'
     bl_region_type = 'WINDOW'
 
     def local_menu(self):
-        t = Global.timeline.ext.get_ext(TimelineMove)
         layout = self.layout
 
-        keyframe = t.settings_keyframe.keyframe
+        keyframe = Global.timeline.keyframe.context_keyframe.keyframe
         layout.prop(keyframe, 'event', text='')
 
         if keyframe.event == EVENTS_LOCAL.AddEnvironmentSprite or keyframe.event == EVENTS_LOCAL.SetEnvSpriteImage:
@@ -54,12 +53,12 @@ class BT_PT_settings_menu(Panel):
             pass
 
         o = self.layout.operator(
-            BT_OT_timeline_add_keyframe.bl_idname, text='Remove')
+            BT_OT_timeline_action.bl_idname, text='Remove')
         o.action = 'REMOVE_MOUSE'
 
 
 class BT_MT_context_menu(Menu):
-    bl_label = "Context Menu"
+    bl_label = 'Context Menu'
 
     def draw(self, context):
         layout = self.layout
@@ -71,7 +70,7 @@ class BT_MT_context_menu(Menu):
 
         for i in events.enum():
             o = layout.operator(
-                BT_OT_timeline_add_keyframe.bl_idname, text=i[1])
+                BT_OT_timeline_action.bl_idname, text=i[1])
             o.action = 'ADD_MOUSE'
             o.event = i[0]
 

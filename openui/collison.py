@@ -18,6 +18,6 @@ class BoundingBox:
     def collide(self, x: float, y: float, add_x: float = 0, add_y: float = 0) -> bool:
         box = self.box
         cx = x >= box.x1 - add_x and x <= box.x2 + add_x
-        cy = y >= box.y1 and y <= box.y2
+        cy = y >= box.y1 - add_y and y <= box.y2 + add_y
 
         return cx and cy

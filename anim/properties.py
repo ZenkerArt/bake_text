@@ -1,13 +1,11 @@
-from enum import Enum, auto
-
 import bpy
 from ..enums import EVENTS_LOCAL, EVENTS_GLOBAL
 from ..image.operators import image_enum
 
 
 class TIMELINE_STATE:
-    GLOBAL = 0
-    LOCAL = 1
+    GLOBAL = 1
+    LOCAL = 2
 
 
 def update(self, context):

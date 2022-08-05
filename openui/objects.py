@@ -136,10 +136,12 @@ class Obj(ABC):
 
 class Shape(Obj, ABC):
     bounding: BoundingBox
+    shader = None
 
     def __init__(self):
         super().__init__()
         self.bounding = BoundingBox(0, 0, 0, 0)
+        self.shader = from_builtin('2D_UNIFORM_COLOR')
 
     @abstractmethod
     def draw(self) -> DrawReturn:
@@ -174,7 +176,7 @@ class Shape(Obj, ABC):
 
     def render(self):
         vert, indices = self.calc()
-        shader = from_builtin('2D_UNIFORM_COLOR')
+        shader = self.shader
 
         batch = batch_for_shader(
             shader, 'TRIS', {'pos': vert}, indices=indices)
