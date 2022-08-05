@@ -19,8 +19,8 @@ class BT_PT_timeline(bpy.types.Panel, BasePanel):
                                  text='Скрыть таймлайн')
 
         text = {
-            TIMELINE_STATE.GLOBAL: 'Локальный Таймлайн',
-            TIMELINE_STATE.OBJECT: 'Глобальный Таймлайн'
+            TIMELINE_STATE.OBJECT: 'Сейчас Локальный Таймлайн',
+            TIMELINE_STATE.GLOBAL: 'Сейчас Глобальный Таймлайн'
         }
 
         o = self.layout.operator(BT_OT_timeline_action.bl_idname,

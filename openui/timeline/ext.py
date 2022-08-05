@@ -169,11 +169,14 @@ class TimelineActiveObj(TimelineExt):
     obj: Object = None
 
     def event(self, context: Context, event: Event):
-        if self.obj and self.obj.name == context.active_object.name:
-            return
-        obj = context.active_object
-        self.obj = obj
-        self.timeline.keyframe.update(obj.bt_keyframes)
+        try:
+            if self.obj and self.obj.name == context.active_object.name:
+                return
+            obj = context.active_object
+            self.obj = obj
+            self.timeline.keyframe.update(obj.bt_keyframes)
+        except ReferenceError:
+            pass
 
 
 TimelineExtGroup.local.extend([TimelineControl, TimelineMove])
