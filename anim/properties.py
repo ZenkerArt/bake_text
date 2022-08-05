@@ -1,11 +1,10 @@
 import bpy
+from ..anim.timeline_states import TIMELINE_STATE
 from ..enums import EVENTS_LOCAL, EVENTS_GLOBAL
 from ..image.operators import image_enum
 
 
-class TIMELINE_STATE:
-    GLOBAL = 1
-    LOCAL = 2
+
 
 
 def update(self, context):
@@ -36,7 +35,8 @@ class GTimelineKeyframe(BaseKeyframe, bpy.types.PropertyGroup):
 
 
 class SettingsTimeline(bpy.types.PropertyGroup):
-    state: bpy.props.IntProperty(default=TIMELINE_STATE.LOCAL)
+    state: bpy.props.IntProperty(default=TIMELINE_STATE.OBJECT.value)
+    time_unit: bpy.props.IntProperty()
 
     @staticmethod
     def keyframes():

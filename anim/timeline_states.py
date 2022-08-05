@@ -8,6 +8,11 @@ class TIMELINE_STATE(Enum):
     OBJECT = auto()
 
 
+class TIMELINE_UNIT(Enum):
+    FRAME = auto()
+    TIME = auto()
+
+
 class TimelineState:
     @staticmethod
     def store():

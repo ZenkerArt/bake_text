@@ -1,6 +1,6 @@
 import bpy
-from ..operators import BT_OT_bake_text, BT_OT_empty
 from . import BasePanel
+from ..operators import BT_OT_bake_text
 
 
 class BT_PT_scene_settings(BasePanel, bpy.types.Panel):

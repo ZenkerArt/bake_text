@@ -1,5 +1,4 @@
 from typing import TypeVar
-from uuid import uuid4
 
 import numpy
 
@@ -11,7 +10,7 @@ from .shapes import TimelineShapes
 from .tstyle import TimelineStyle
 from ..collison import BoundingBox
 from ..objects import Obj, Box
-from ..timeline.ext import TimelineExt, TimelineActiveObj, TimelineExtGroup, REGION, Keyframe, TimelineMove, FrameInfo
+from ..timeline.ext import TimelineExt, TimelineActiveObj, TimelineExtGroup, REGION, TimelineMove, FrameInfo
 
 _T = TypeVar('_T')
 
@@ -33,14 +32,6 @@ class Timeline(Obj):
         self.cursor = TimelineCursor(self)
         self.lines = TimelineLines(self)
         self.keyframe = TimelineKeyframes(self)
-
-    @property
-    def keyframes(self):
-        return self.keyframe.keyframes
-
-    @keyframes.setter
-    def keyframes(self, value):
-        self.keyframe.keyframes = value
 
     def event(self, context: Context, event: Event):
         bounding = BoundingBox(
@@ -78,21 +69,6 @@ class Timeline(Obj):
     def add_keyframe(self, index: int, event: str = None, keyframes=None):
         self.keyframe.add_keyframe(index, event, keyframes)
 
-    def _draw_keyframes(self):
-        width, height = self.wh
-
-        for i in self.keyframes.values():
-
-            line, text = i.get_line()
-
-            if line.pos[0] > width or line.pos[0] < 0:
-                continue
-
-            line.set_wh(2)
-
-            line.render()
-            text.render()
-
     def render(self):
         style = self.style
         width, height = self.wh
@@ -102,4 +78,5 @@ class Timeline(Obj):
 
         self.lines.draw()
         self.cursor.draw()
-        self._draw_keyframes()
+        self.keyframe.draw()
+        # self._draw_keyframes()

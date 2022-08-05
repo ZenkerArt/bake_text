@@ -1,9 +1,9 @@
 import bpy
 from bpy.types import Panel, Menu
+from .timeline_states import TIMELINE_STATE, TimelineState
 from ..openui.timeline import TimelineMove
 from .g import Global
 from .operators import BT_OT_timeline_action
-from .properties import TIMELINE_STATE
 from ..enums import EVENTS_LOCAL, EVENTS_GLOBAL
 from ..image.operators import ImageLoader
 
@@ -41,12 +41,13 @@ class BT_PT_settings_menu(Panel):
             layout.prop(keyframe, 'player_dist', text='')
 
     def draw(self, context):
-        store = context.scene.bt_store_timeline
+        state = TimelineState.state()
+
         try:
             ImageLoader.init()
-            if store.state == TIMELINE_STATE.LOCAL:
+            if state == TIMELINE_STATE.OBJECT:
                 self.local_menu()
-            elif store.state == TIMELINE_STATE.GLOBAL:
+            elif state == TIMELINE_STATE.GLOBAL:
                 self.global_menu()
 
         except AttributeError:
@@ -62,10 +63,9 @@ class BT_MT_context_menu(Menu):
 
     def draw(self, context):
         layout = self.layout
-        store = context.scene.bt_store_timeline
         events = EVENTS_LOCAL
 
-        if store.state == TIMELINE_STATE.GLOBAL:
+        if TimelineState.state() == TIMELINE_STATE.GLOBAL:
             events = EVENTS_GLOBAL
 
         for i in events.enum():

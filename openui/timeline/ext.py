@@ -147,8 +147,8 @@ class TimelineMove(TimelineExt):
 
         if event.type == 'RIGHTMOUSE' and event.value == 'RELEASE':
             keyframe = self.timeline.keyframe.get_keyframe_by_cord(mx, my)
-            self.timeline.keyframe.context_keyframe = keyframe
 
+            self.timeline.keyframe.context_keyframe = keyframe
             if keyframe:
                 bpy.ops.wm.call_panel(name='BT_PT_settings_menu')
             else:

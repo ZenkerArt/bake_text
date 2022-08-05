@@ -59,7 +59,7 @@ class TimelineKeyframes(BaseComponent):
 
     def get_keyframe_by_cord(self, x: float, y: float):
         timeline = self.timeline
-        for keyframe in timeline.keyframes.values():
+        for keyframe in self.keyframes.values():
             keyframe: Keyframe
             collide = keyframe.box.bounding.collide(x, y, add_x=10 * timeline.zoom)
             if collide:
@@ -80,8 +80,7 @@ class TimelineKeyframes(BaseComponent):
             self._active_keyframe.box.set_color(self.timeline.style.keyframe_active)
 
     def update(self, keyframes):
-        timeline = self.timeline
-        timeline.keyframes = {key: Keyframe(value, timeline) for key, value in keyframes.items()}
+        self.keyframes = {key: Keyframe(value, self.timeline) for key, value in keyframes.items()}
 
     def add_keyframe(self, index: int, event: str = None, keyframes=None):
         ids = str(uuid4())

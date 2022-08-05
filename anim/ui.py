@@ -1,8 +1,8 @@
 import bpy
+from .timeline_states import TIMELINE_STATE, TimelineState
 from ..openui.timeline import TimelineMove
 from .g import Global
 from .operators import BT_OT_timeline_action, BT_OT_timeline
-from .properties import TIMELINE_STATE
 from ..ui import BasePanel
 
 
@@ -18,15 +18,13 @@ class BT_PT_timeline(bpy.types.Panel, BasePanel):
             self.layout.operator(BT_OT_timeline.bl_idname,
                                  text='Скрыть таймлайн')
 
-        store = context.scene.bt_store_timeline
-
         text = {
             TIMELINE_STATE.GLOBAL: 'Локальный Таймлайн',
-            TIMELINE_STATE.LOCAL: 'Глобальный Таймлайн'
+            TIMELINE_STATE.OBJECT: 'Глобальный Таймлайн'
         }
 
         o = self.layout.operator(BT_OT_timeline_action.bl_idname,
-                                 text=text[store.state])
+                                 text=text[TimelineState.state()])
         o.action = 'SWITCH'
 
         o = self.layout.operator(

@@ -55,7 +55,8 @@ class BT_OT_timeline_action(bpy.types.Operator):
 
         if self.action == 'SWITCH':
             Global.switch = not Global.switch
-            TimelineState.set_state(TIMELINE_STATE.GLOBAL if Global.switch else TIMELINE_STATE.OBJECT)
+            TimelineState.set_state(
+                TIMELINE_STATE.GLOBAL if Global.switch else TIMELINE_STATE.OBJECT)
             timeline.keyframe.update(TimelineState.active_keyframes())
 
         if self.action == 'CLEAR':
