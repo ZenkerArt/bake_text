@@ -1,8 +1,11 @@
-from . import properties, timeline
+from . import properties, ui, operators, context_menu
+from .g import Global
 
 modules = (
     properties,
-    timeline
+    ui,
+    operators,
+    context_menu
 )
 
 
@@ -12,5 +15,6 @@ def register():
 
 
 def unregister():
+    Global.unregister()
     for i in modules:
         i.unregister()
