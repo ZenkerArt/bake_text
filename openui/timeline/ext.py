@@ -1,13 +1,12 @@
 from abc import ABC, abstractmethod
-from typing import Optional, TYPE_CHECKING, Any, Type, TypeVar
+from typing import Optional, TYPE_CHECKING, Type, TypeVar
 
 import bpy
 from bpy.types import Context, Event, Object
-from mathutils import Vector
-from ..objects import Box, Text, ALIGN, RGB
 
 if TYPE_CHECKING:
     from . import Timeline
+    from .components.keyframes import Keyframe
 
 _T = TypeVar('_T')
 
@@ -27,46 +26,6 @@ class FrameInfo:
 class REGION:
     GLOBAL = 'GLOBAL'
     LOCAL = 'OBJECT'
-
-
-class Keyframe:
-    keyframe: Any
-    timeline: 'Timeline'
-    box: Box = None
-    text: Text = None
-
-    def __init__(self, keyframe: Any, timeline: 'Timeline'):
-        self.keyframe = keyframe
-        self.timeline = timeline
-
-    def get_line(self) -> tuple[Box, Text]:
-        timeline = self.timeline
-        vec = timeline.matrix * (self.index * timeline.style.line_offset)
-        title_height = self.timeline.style.title_height
-
-        if self.box is None:
-            self.box = timeline.shapes.draw_line(vec)
-            self.box.set_color(timeline.style.keyframe)
-            self.text = self.timeline.shapes.draw_text_in_footer(vec.x, self.command)
-
-        else:
-            self.box.set_pos(vec + Vector((0, self.box.pos[1], 0)))
-            self.text.set_pos(vec.x, title_height / 2)
-            self.text.set_text(self.command)
-
-        return self.box, self.text
-
-    @property
-    def command(self) -> str:
-        return self.keyframe.command
-
-    @property
-    def index(self) -> int:
-        return self.keyframe.index
-
-    @property
-    def obj_id(self) -> str:
-        return self.keyframe.obj_id
 
 
 class TimelineExt(ABC):
@@ -166,9 +125,9 @@ class TimelineMove(TimelineExt):
     zoom_factor = 1.1
     click: bool = False
     offset: float = 0
-    _active_keyframe: Optional[Keyframe] = None
-    hover_keyframe: Optional[Keyframe] = None
-    settings_keyframe: Optional[Keyframe] = None
+    _active_keyframe: Optional['Keyframe'] = None
+    hover_keyframe: Optional['Keyframe'] = None
+    settings_keyframe: Optional['Keyframe'] = None
     mouse: int = 0
 
     def event(self, context: Context, event: Event):
