@@ -183,8 +183,8 @@ class TimelineActiveObj(TimelineExt):
                 keyframes = obj.bt_keyframes
 
             self.timeline.keyframe.update(keyframes)
-        except AttributeError as e:
-            print(e)
+        except AttributeError:
+            pass
         except ReferenceError:
             pass
 
