@@ -114,6 +114,31 @@ class EventToString:
         })
 
 
+def bake_camera(result):
+    context = bpy.context
+    scene = context.scene
+    end = scene.frame_end
+    settings = scene.bt_settings
+    cam: Object = settings.camera
+    expression = settings.camera_expression
+
+    prev_value = 0
+    for index in range(0, end):
+        context.scene.frame_set(index)
+        value = eval(expression)
+
+        if prev_value == value:
+            prev_value = value
+            continue
+
+        result.append({
+            'time': calc_time(index),
+            'data': ('SetPlayerDistance', f'{value}')
+        })
+
+        prev_value = value
+
+
 def bake_object(objects: list[Object]) -> dict:
     context = bpy.context
     scene = context.scene
@@ -124,6 +149,8 @@ def bake_object(objects: list[Object]) -> dict:
 
     result = []
     add = []
+
+    bake_camera(result)
 
     prev_sums = None
     skip_event = {}
@@ -136,6 +163,9 @@ def bake_object(objects: list[Object]) -> dict:
 
     for index, arr in enumerate(arr):
         frame, sums, obj, name = times[index]
+        if obj.copy_from:
+            obj = obj.copy_from
+
         t = calc_time(frame)
 
         sums = False, False, False
@@ -143,7 +173,8 @@ def bake_object(objects: list[Object]) -> dict:
         if prev_sums:
             sums = tuple(numpy.equal(sums, prev_sums))
 
-        transforms = tuple(zip(arr, ('SetPosition', 'SetRotation', 'SetScale'), sums))
+        transforms = tuple(
+            zip(arr, ('SetPosition', 'SetRotation', 'SetScale'), sums))
 
         if name not in add:
             skip_event = {}

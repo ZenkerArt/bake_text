@@ -12,6 +12,9 @@ class BT_PT_scene_settings(BasePanel, bpy.types.Panel):
         layout = self.layout
         layout.label(text='Папка проекта')
         layout.prop(settings, 'project_folder', text='')
+        layout.label(text='Камера')
+        layout.prop(settings, 'camera', text='')
+        layout.prop(settings, 'camera_expression', text='')
 
         if settings.project_folder.strip() == '':
             return

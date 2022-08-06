@@ -134,6 +134,7 @@ class TimelineMove(TimelineExt):
         mx, my = event.mouse_region_x, event.mouse_region_y
         mouse = self.timeline.matrix.transform(mx)
         self.timeline.keyframe.mouse_pos = mouse
+        self.timeline.keyframe.abs_mouse = event.mouse_x, event.mouse_y
 
         if event.type == 'LEFTMOUSE' and event.value == 'PRESS':
             self.click = True
@@ -174,7 +175,14 @@ class TimelineActiveObj(TimelineExt):
                 return
             obj = context.active_object
             self.obj = obj
-            self.timeline.keyframe.update(obj.bt_keyframes)
+
+            copy_from = obj.bt_settings.copy_from
+            if copy_from:
+                keyframes = copy_from.bt_keyframes
+            else:
+                keyframes = obj.bt_keyframes
+
+            self.timeline.keyframe.update(keyframes)
         except ReferenceError:
             pass
 

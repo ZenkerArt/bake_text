@@ -14,5 +14,11 @@ class BT_PT_object_settings(BasePanel, bpy.types.Panel):
             layout.label(text='Объект не выбран')
             return
 
+        layout.label(text='Копировать с')
+        layout.prop(settings, 'copy_from', text='')
+
+        if settings.copy_from:
+            settings = settings.copy_from.bt_settings
+
         layout.label(text='Тип Запечьки')
         layout.prop(settings, 'bake_type', text='')

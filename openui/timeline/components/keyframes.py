@@ -57,9 +57,9 @@ class TimelineKeyframes(BaseComponent):
     keyframes: dict[str, Keyframe] = {}
     context_keyframe: Optional[Keyframe] = None
     mouse_pos: int = 0
+    abs_mouse: tuple[int, int] = 0, 0
 
     def get_keyframe_by_cord(self, x: float, y: float):
-        timeline = self.timeline
         for keyframe in self.keyframes.values():
             keyframe: Keyframe
             collide = keyframe.box.bounding.collide(x, y, add_x=20)

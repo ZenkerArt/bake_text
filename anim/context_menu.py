@@ -1,9 +1,8 @@
 import bpy
 from bpy.types import Panel, Menu
-from .timeline_states import TIMELINE_STATE, TimelineState
-from ..openui.timeline import TimelineMove
 from .g import Global
 from .operators import BT_OT_timeline_action
+from .timeline_states import TIMELINE_STATE, TimelineState
 from ..enums import EVENTS_LOCAL, EVENTS_GLOBAL
 from ..image.operators import ImageLoader
 
@@ -31,10 +30,9 @@ class BT_PT_settings_menu(Panel):
             layout.prop(keyframe, 'sun_sensitivity', text='')
 
     def global_menu(self):
-        t = Global.timeline.ext.get_ext(TimelineMove)
         layout = self.layout
 
-        keyframe = t.settings_keyframe.keyframe
+        keyframe = Global.timeline.keyframe.context_keyframe.keyframe
         layout.prop(keyframe, 'event', text='')
 
         if keyframe.event == EVENTS_GLOBAL.SetPlayerDistance:

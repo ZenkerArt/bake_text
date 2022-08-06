@@ -4,9 +4,6 @@ from ..enums import EVENTS_LOCAL, EVENTS_GLOBAL
 from ..image.operators import image_enum
 
 
-
-
-
 def update(self, context):
     self.command = self.label()
 
@@ -52,6 +49,8 @@ reg, unreg = bpy.utils.register_classes_factory((
 
 def register():
     reg()
+
+    bpy.types.Object.copy_from = bpy.props.StringProperty()
     bpy.types.Object.bt_keyframes = bpy.props.CollectionProperty(type=TimelineKeyframe)
     bpy.types.Scene.bt_keyframes = bpy.props.CollectionProperty(type=GTimelineKeyframe)
     bpy.types.Scene.bt_store_timeline = bpy.props.PointerProperty(type=SettingsTimeline)

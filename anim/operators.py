@@ -14,6 +14,9 @@ class BT_OT_timeline(bpy.types.Operator):
     def modal(self, context: bpy.types.Context, event: bpy.types.Event):
         if context.area:
             context.area.tag_redraw()
+        else:
+            Global.unregister()
+            return {'FINISHED'}
 
         v = Global.timeline.event(context, event)
         if v:
@@ -48,6 +51,11 @@ class BT_OT_timeline_action(bpy.types.Operator):
             timeline.add_keyframe(mouse, self.event, keyframes)
 
         if self.action == 'REMOVE_MOUSE' and context_keyframe:
+            bpy.context.window.cursor_warp(10, 10)
+
+            move_back = lambda: bpy.context.window.cursor_warp(*timeline.keyframe.abs_mouse)
+            bpy.app.timers.register(move_back, first_interval=0.001)
+
             for index, key in enumerate(keyframes):
                 if context_keyframe.name == key.name:
                     keyframes.remove(index)
