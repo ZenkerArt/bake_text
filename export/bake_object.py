@@ -27,9 +27,13 @@ def get_position(objects: list[Object], end: int) -> tuple[list[ObjTransform], l
         bpy.context.scene.frame_set(frame)
 
         for obj in objects:
-            if obj.particle_systems:
+            typ = obj
+            if obj.bt_settings.copy_from:
+                typ = obj.bt_settings.copy_from
+
+            if typ.particle_systems:
                 func = save_particle
-            elif obj.bt_settings.bake_type == OBJECT_BAKE_TYPE.BAKE_LOCATION:
+            elif typ.bt_settings.bake_type == OBJECT_BAKE_TYPE.BAKE_LOCATION:
                 func = save_obj
             else:
                 func = save_vertex
@@ -163,8 +167,8 @@ def bake_object(objects: list[Object]) -> dict:
 
     for index, arr in enumerate(arr):
         frame, sums, obj, name = times[index]
-        if obj.copy_from:
-            obj = obj.copy_from
+        if obj.bt_settings.copy_from:
+            obj = obj.bt_settings.copy_from
 
         t = calc_time(frame)
 
