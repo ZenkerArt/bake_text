@@ -2,6 +2,7 @@ from abc import ABC, abstractmethod
 from typing import Optional, TYPE_CHECKING, Type, TypeVar
 
 import bpy
+from ...anim.timeline_states import TimelineState
 from bpy.types import Context, Event, Object
 from ...enums import COPY_MODE
 
@@ -176,12 +177,12 @@ class TimelineActiveObj(TimelineExt):
                 return
             obj = context.active_object
             self.obj = obj
-
-            copy_from = obj.bt_settings.copy_from
-            if copy_from and obj.bt_settings.copy_mode == COPY_MODE.REPLACE:
-                keyframes = copy_from.bt_keyframes
-            else:
-                keyframes = obj.bt_keyframes
+            keyframes = TimelineState.active_keyframes(obj)
+            # copy_from = obj.bt_settings.copy_from
+            # if copy_from and obj.bt_settings.copy_mode == COPY_MODE.REPLACE:
+            #     keyframes = copy_from.bt_keyframes
+            # else:
+            #     keyframes = obj.bt_keyframes
 
             self.timeline.keyframe.update(keyframes)
         except AttributeError:

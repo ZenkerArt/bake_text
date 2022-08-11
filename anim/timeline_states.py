@@ -29,10 +29,10 @@ class TimelineState:
         cls.store().state = state.value
 
     @classmethod
-    def active_keyframes(cls):
+    def active_keyframes(cls, obj=None):
         store = cls.store()
         state = TIMELINE_STATE(store.state)
-        obj = bpy.context.active_object
+        obj = obj or bpy.context.active_object
 
         if state == TIMELINE_STATE.OBJECT:
             copy_from = obj.bt_settings.copy_from
