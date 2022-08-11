@@ -28,3 +28,9 @@ class Global:
                 cls.draw, (), 'WINDOW', 'POST_PIXEL')
         else:
             cls.unregister()
+
+    @classmethod
+    def restart(cls):
+        cls.unregister()
+        cls.timeline = Timeline()
+        cls.register()

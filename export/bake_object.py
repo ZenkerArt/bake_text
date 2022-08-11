@@ -4,7 +4,7 @@ import bpy
 from bpy.types import Object
 from .export_methods import save_obj, save_vertex, save_particle
 from .utils import apply_transforms, calc_time, ObjTransform
-from ..enums import OBJECT_BAKE_TYPE
+from ..enums import OBJECT_BAKE_TYPE, COPY_MODE
 
 
 def to_str(func: str, value: tuple[str, str, str], name: str):
@@ -167,8 +167,13 @@ def bake_object(objects: list[Object]) -> dict:
 
     for index, arr in enumerate(arr):
         frame, sums, obj, name = times[index]
+        keyframes = list(obj.bt_keyframes.values())
+
         if obj.bt_settings.copy_from:
-            obj = obj.bt_settings.copy_from
+            if obj.bt_settings.copy_mode == COPY_MODE.REPLACE:
+                keyframes = obj.bt_settings.copy_from.bt_keyframes.values()
+            else:
+                keyframes.extend(obj.bt_settings.copy_from.bt_keyframes.values())
 
         t = calc_time(frame)
 
@@ -183,7 +188,7 @@ def bake_object(objects: list[Object]) -> dict:
         if name not in add:
             skip_event = {}
             add.append(name)
-            for keyframe in obj.bt_keyframes.values():
+            for keyframe in keyframes:
                 event = keyframe.event
                 event_func = getattr(EventToString, event)
                 event_result = event_func(keyframe, result, name, skip_event)

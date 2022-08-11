@@ -1,7 +1,7 @@
 import bpy
 from .anim import Global
 from .anim.timeline_states import TimelineState
-from .enums import OBJECT_BAKE_TYPE, OBJECT_RENDER_TYPE
+from .enums import OBJECT_BAKE_TYPE, OBJECT_RENDER_TYPE, COPY_MODE
 from .image.operators import image_enum
 
 
@@ -13,6 +13,18 @@ def update_timeline(self, context):
     Global.timeline.keyframe.update(TimelineState.active_keyframes())
 
 
+def update__(self, context):
+    obj = context.active_object
+
+    copy_from = obj.bt_settings.copy_from
+    if copy_from and obj.bt_settings.copy_mode == COPY_MODE.REPLACE:
+        keyframes = copy_from.bt_keyframes
+    else:
+        keyframes = obj.bt_keyframes
+
+    Global.timeline.keyframe.update(keyframes)
+
+
 class ObjectSettings(bpy.types.PropertyGroup):
     bake_type: bpy.props.EnumProperty(items=(
         (OBJECT_BAKE_TYPE.BAKE_VERTEX, 'Запечь Вершины', ''),
@@ -21,6 +33,11 @@ class ObjectSettings(bpy.types.PropertyGroup):
     image: bpy.props.EnumProperty(items=image_enum)
     render_type: bpy.props.EnumProperty(items=OBJECT_RENDER_TYPE.enum())
     sun_sensitivity: bpy.props.FloatProperty(default=4)
+
+    copy_mode: bpy.props.EnumProperty(items=(
+        (COPY_MODE.MIX, 'Микс', 'Микс'),
+        (COPY_MODE.REPLACE, 'Заменить', 'Заменить')
+    ), default=COPY_MODE.MIX, update=update__)
     copy_from: bpy.props.PointerProperty(
         type=bpy.types.Object, update=update_timeline)
 

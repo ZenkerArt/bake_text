@@ -1,5 +1,4 @@
 import bpy
-from .timeline_states import TIMELINE_STATE, TimelineState
 from .g import Global
 from .operators import BT_OT_timeline_action, BT_OT_timeline
 from ..ui import BasePanel
@@ -17,6 +16,9 @@ class BT_PT_timeline(bpy.types.Panel, BasePanel):
         else:
             layout.operator(BT_OT_timeline.bl_idname,
                             text='Скрыть таймлайн')
+            o = self.layout.operator(
+                BT_OT_timeline_action.bl_idname, text='Перезагрузить таймлаин')
+            o.action = 'RESTART'
 
         o = self.layout.operator(
             BT_OT_timeline_action.bl_idname, text='Удалить все ключи')

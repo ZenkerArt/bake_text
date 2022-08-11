@@ -70,6 +70,9 @@ class BT_OT_timeline_action(bpy.types.Operator):
         if self.action == 'CLEAR':
             timeline.keyframe.keyframes = {}
             keyframes.clear()
+
+        if self.action == 'RESTART':
+            Global.restart()
         return {'FINISHED'}
 
 

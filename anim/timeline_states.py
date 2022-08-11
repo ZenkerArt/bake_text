@@ -1,6 +1,7 @@
 from enum import Enum, auto
 
 import bpy
+from ..enums import COPY_MODE
 
 
 class TIMELINE_STATE(Enum):
@@ -32,12 +33,14 @@ class TimelineState:
         store = cls.store()
         state = TIMELINE_STATE(store.state)
         obj = bpy.context.active_object
+
         if state == TIMELINE_STATE.OBJECT:
             copy_from = obj.bt_settings.copy_from
-            if copy_from:
+
+            if copy_from and obj.bt_settings.copy_mode == COPY_MODE.REPLACE:
                 return copy_from.bt_keyframes
-            else:
-                return obj.bt_keyframes
+
+            return obj.bt_keyframes
 
         elif state == TIMELINE_STATE.GLOBAL:
             return store.keyframes()

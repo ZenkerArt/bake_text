@@ -18,7 +18,7 @@ CONFIG = {
     "speed": 15.0,
     "lives": 5,
     "maxLives": 5,
-    "musicFile": "music.mp3",
+    "musicFile": "music.ogg",
     "musicTime": 209.867,
     "iconFile": "icon.png",
     "environmentType": -1,

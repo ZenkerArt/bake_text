@@ -16,6 +16,7 @@ class BT_PT_object_settings(BasePanel, bpy.types.Panel):
 
         layout.label(text='Копировать с')
         layout.prop(settings, 'copy_from', text='')
+        layout.prop(settings, 'copy_mode', text='Режим наложение', expand=True)
 
         if settings.copy_from:
             settings = settings.copy_from.bt_settings

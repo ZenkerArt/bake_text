@@ -3,6 +3,7 @@ from typing import Optional, TYPE_CHECKING, Type, TypeVar
 
 import bpy
 from bpy.types import Context, Event, Object
+from ...enums import COPY_MODE
 
 if TYPE_CHECKING:
     from . import Timeline
@@ -177,7 +178,7 @@ class TimelineActiveObj(TimelineExt):
             self.obj = obj
 
             copy_from = obj.bt_settings.copy_from
-            if copy_from:
+            if copy_from and obj.bt_settings.copy_mode == COPY_MODE.REPLACE:
                 keyframes = copy_from.bt_keyframes
             else:
                 keyframes = obj.bt_keyframes
