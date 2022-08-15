@@ -23,8 +23,8 @@ class ObjectSettings(bpy.types.PropertyGroup):
         (OBJECT_BAKE_TYPE.BAKE_LOCATION, 'Запечь Позицию', '')
     ), default=OBJECT_BAKE_TYPE.BAKE_LOCATION)
     image: bpy.props.EnumProperty(items=image_enum)
-    render_type: bpy.props.EnumProperty(items=OBJECT_RENDER_TYPE.enum())
-    sun_sensitivity: bpy.props.FloatProperty(default=4)
+
+    particle_rotation: bpy.props.FloatVectorProperty(subtype='QUATERNION', unit='ROTATION')
 
     copy_mode: bpy.props.EnumProperty(items=(
         (COPY_MODE.MIX, 'Микс', 'Микс'),

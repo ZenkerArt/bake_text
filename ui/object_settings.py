@@ -23,3 +23,7 @@ class BT_PT_object_settings(BasePanel, bpy.types.Panel):
 
         layout.label(text='Тип Запечьки')
         layout.prop(settings, 'bake_type', text='')
+
+        if obj.particle_systems:
+            layout.label(text='Ротация всех частиц')
+            layout.prop(settings, 'particle_rotation', text='')

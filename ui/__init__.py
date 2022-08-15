@@ -48,6 +48,7 @@ class BT_PT_particle(BasePanel, bpy.types.Panel):
             l = layout.box()
             self.draw_particle_system(l, particle_system=p_sys)
 
+
         if is_duplicate:
             layout.label(
                 text='Обнаружены дубликаты систем частиц', icon='ERROR')
@@ -86,8 +87,8 @@ class BT_PT_parents(BasePanel, bpy.types.Panel):
 register, unregister = bpy.utils.register_classes_factory((
     BT_PT_scene_settings,
     BT_PT_invers,
-    BT_PT_particle,
+    # BT_PT_particle,
     BT_PT_text_glob_div,
-    BT_PT_parents,
+    # BT_PT_parents,
     BT_PT_object_settings
 ))

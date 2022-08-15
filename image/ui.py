@@ -67,7 +67,7 @@ class BT_PT_image(ObjectSettings, Panel):
 reg, unreg = bpy.utils.register_classes_factory((
     BT_UL_image_list,
     BT_PT_image_list,
-    BT_PT_image
+    # BT_PT_image
 ))
 
 

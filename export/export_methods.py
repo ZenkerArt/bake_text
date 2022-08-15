@@ -49,11 +49,12 @@ def save_vertex(obj: Object, frame, arr, times, dg=None):
 def save_particle(obj: Object, frame, arr, times, dg=None):
     ev_obj: Object = obj.evaluated_get(dg)
     ps = ev_obj.particle_systems[0]
+    rot = tuple(math.degrees(r) for r in obj.bt_settings.particle_rotation)
 
     for index, i in enumerate(ps.particles):
         i: Particle
         loc: ObjVector = ev_obj.matrix_world @ i.location
-        rot: ObjVector = tuple(math.degrees(r) for r in i.rotation)
+        # rot: ObjVector = tuple(math.degrees(r) for r in i.rotation)
         scale: ObjVector = ev_obj.matrix_world @ Vector((i.size,) * 3)
 
         sums, vecs = calc_sums(loc, rot, scale)
